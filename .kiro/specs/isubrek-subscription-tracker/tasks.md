@@ -85,16 +85,30 @@
     - **Property 6: Subscription Serialization Round-Trip**
     - **Validates: Requirements 2.7, 2.8**
 
-- [ ] 3. Checkpoint - Ensure all tests pass
+- [x] 3. Checkpoint - Ensure all tests pass
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Implement Zod validation schemas
-  - [ ] 4.1 Create validation schemas
+- [x] 4. Implement Zod validation schemas
+
+
+
+
+
+
+  - [x] 4.1 Create validation schemas
+
     - Implement `createSubscriptionSchema` in `src/lib/validations.ts`
     - Implement `updateSubscriptionSchema`
     - Include all field validations as per design document
     - _Requirements: 2.6_
-  - [ ] 4.2 Write property test for Zod validation
+
+  - [x] 4.2 Write property test for Zod validation
+
     - **Property 5: Zod Validation Correctness**
     - **Validates: Requirements 2.6**
 
