@@ -8,7 +8,6 @@
  */
 
 import * as React from "react";
-import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,9 @@ import {
 } from "@/components/ui/sheet";
 import { SubscriptionForm } from "@/components/subscription-form";
 import {
-  createSubscription,
-  updateSubscription,
-} from "@/actions/subscriptions";
+  useCreateSubscription,
+  useUpdateSubscription,
+} from "@/hooks/use-subscriptions";
 import type { CreateSubscriptionInput } from "@/lib/validations";
 import type { Subscription } from "@/db/schema";
 
@@ -52,7 +51,10 @@ export function SubscriptionSheet({
   onOpenChange: controlledOnOpenChange,
 }: SubscriptionSheetProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Use TanStack Query mutations for automatic cache invalidation
+  const createMutation = useCreateSubscription(userId);
+  const updateMutation = useUpdateSubscription(userId);
 
   // Support both controlled and uncontrolled modes
   const isControlled = controlledOpen !== undefined;
@@ -62,42 +64,18 @@ export function SubscriptionSheet({
     : setInternalOpen;
 
   const isEditMode = !!subscription;
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleSubmit = async (data: CreateSubscriptionInput) => {
-    setIsSubmitting(true);
-
-    try {
-      if (isEditMode && subscription) {
-        // Update existing subscription
-        const result = await updateSubscription(userId, subscription.id, data);
-
-        if (result.success) {
-          toast.success("Subscription updated", {
-            description: `${data.name} has been updated successfully.`,
-          });
-        } else {
-          toast.error("Failed to update subscription", {
-            description: result.error || "An unexpected error occurred.",
-          });
-          throw new Error(result.error);
-        }
-      } else {
-        // Create new subscription
-        const result = await createSubscription(userId, data);
-
-        if (result.success) {
-          toast.success("Subscription created", {
-            description: `${data.name} has been added to your subscriptions.`,
-          });
-        } else {
-          toast.error("Failed to create subscription", {
-            description: result.error || "An unexpected error occurred.",
-          });
-          throw new Error(result.error);
-        }
-      }
-    } finally {
-      setIsSubmitting(false);
+    if (isEditMode && subscription) {
+      // Update existing subscription
+      await updateMutation.mutateAsync({
+        subscriptionId: subscription.id,
+        input: data,
+      });
+    } else {
+      // Create new subscription
+      await createMutation.mutateAsync(data);
     }
   };
 
