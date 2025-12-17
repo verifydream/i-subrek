@@ -112,8 +112,15 @@
     - **Property 5: Zod Validation Correctness**
     - **Validates: Requirements 2.6**
 
-- [ ] 5. Implement server actions for CRUD operations
-  - [ ] 5.1 Create subscription server actions
+- [x] 5. Implement server actions for CRUD operations
+
+
+
+
+
+
+  - [x] 5.1 Create subscription server actions
+
     - Implement `createSubscription` action in `src/actions/subscriptions.ts`
     - Implement `updateSubscription` action
     - Implement `deleteSubscription` action
@@ -121,12 +128,15 @@
     - Implement `getSubscriptionById` action
     - Integrate masking and encryption before database operations
     - _Requirements: 2.1, 2.4, 3.1, 4.1_
-  - [ ] 5.2 Write property tests for server actions
+
+  - [x] 5.2 Write property tests for server actions
+
     - **Property 1: User Data Isolation**
     - **Property 2: Subscription Creation Integrity**
     - **Property 4: Subscription Deletion Completeness**
     - **Validates: Requirements 1.5, 2.1, 2.4, 2.5**
-  - [ ] 5.3 Create password decryption server action
+  - [x] 5.3 Create password decryption server action
+
     - Implement `decryptSubscriptionPassword` action
     - Verify user ownership before decryption
     - _Requirements: 4.2, 4.5_
