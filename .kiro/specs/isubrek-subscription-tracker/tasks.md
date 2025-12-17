@@ -299,29 +299,42 @@
     - Integrate filtering by category and status
     - _Requirements: 5.4, 5.5, 9.2, 9.3_
 
-- [ ] 14. Build subscription detail view
-  - [ ] 14.1 Create detail page
+- [x] 14. Build subscription detail view
+
+  - [x] 14.1 Create detail page
     - Build `src/app/subscriptions/[id]/page.tsx`
     - Display all subscription information
     - Show masked payment method
     - _Requirements: 3.2_
-  - [ ] 14.2 Create password copy button component
+
+  - [x] 14.2 Create password copy button component
     - Build `src/components/password-copy-button.tsx`
     - Implement server action call for decryption
     - Copy to clipboard without displaying password
     - _Requirements: 4.4, 4.5_
-  - [ ] 14.3 Create calendar button component
+
+  - [x] 14.3 Create calendar button component
+
     - Build `src/components/calendar-button.tsx`
     - Generate and open Google Calendar URL
     - _Requirements: 7.4_
 
-- [ ] 15. Build main dashboard page
-  - [ ] 15.1 Create dashboard page
+- [x] 15. Build main dashboard page
+
+
+
+
+
+
+  - [x] 15.1 Create dashboard page
+
     - Build `src/app/page.tsx` as server component
     - Fetch subscriptions via server action
     - Compose summary cards and subscription list
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
-  - [ ] 15.2 Set up TanStack Query for client-side data
+
+  - [x] 15.2 Set up TanStack Query for client-side data
+
     - Configure QueryClientProvider
     - Create `src/hooks/use-subscriptions.ts` query hook
     - Implement optimistic updates for CRUD operations
