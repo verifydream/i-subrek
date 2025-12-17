@@ -14,6 +14,7 @@ import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
 import { SummaryCards } from "@/components/summary-cards";
 import { SubscriptionList } from "@/components/subscription-list";
 import { SubscriptionSheet } from "@/components/subscription-sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   useSubscriptions,
   useDeleteSubscription,
@@ -87,11 +88,14 @@ function DashboardContent() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">iSubrek</h1>
-          <p className="text-muted-foreground">
-            Track your subscriptions and recurring payments
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">iSubrek</h1>
+            <p className="text-muted-foreground">
+              Track your subscriptions and recurring payments
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
 
         {/* Summary Cards */}
