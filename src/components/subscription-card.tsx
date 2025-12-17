@@ -26,6 +26,7 @@ interface SubscriptionCardProps {
   subscription: Subscription;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onClick?: () => void;
 }
 
 /**
@@ -73,6 +74,7 @@ export function SubscriptionCard({
   subscription,
   onEdit,
   onDelete,
+  onClick,
 }: SubscriptionCardProps) {
   const nextPaymentDate = new Date(subscription.nextPaymentDate);
   const isHighlighted = isWithinReminderDays(
@@ -83,9 +85,10 @@ export function SubscriptionCard({
   return (
     <Card
       className={cn(
-        "transition-all hover:shadow-md",
+        "transition-all hover:shadow-md cursor-pointer",
         isHighlighted && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
       )}
+      onClick={onClick}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="space-y-1">
@@ -105,7 +108,12 @@ export function SubscriptionCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Open menu</span>
             </Button>

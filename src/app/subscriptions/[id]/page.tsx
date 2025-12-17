@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Subscription Detail Page
  * Displays all subscription information including masked payment method
@@ -10,14 +8,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, Calendar, CreditCard, Mail, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Mail, FileText, Edit } from "lucide-react";
 import Link from "next/link";
 import { getSubscriptionById } from "@/actions/subscriptions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PasswordCopyButton } from "@/components/password-copy-button";
 import { CalendarButton } from "@/components/calendar-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { BillingCycle, Status } from "@/db/schema";
 
@@ -98,7 +95,7 @@ export default async function SubscriptionDetailPage({
   const startDate = new Date(subscription.startDate);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Header */}
         <div className="mb-6">
@@ -109,7 +106,6 @@ export default async function SubscriptionDetailPage({
                 Back to Dashboard
               </Button>
             </Link>
-            <ThemeToggle />
           </div>
           <div className="flex items-start justify-between">
             <div>
