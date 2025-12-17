@@ -80,3 +80,6 @@ export const updateSubscriptionSchema = createSubscriptionSchema
 // Type exports inferred from schemas
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
 export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
+
+// Form input type (before Zod transforms/defaults are applied)
+export type CreateSubscriptionFormInput = z.input<typeof createSubscriptionSchema>;

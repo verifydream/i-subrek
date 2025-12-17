@@ -249,31 +249,51 @@
     - Persist theme preference to localStorage
     - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 12. Build subscription form component
-  - [ ] 12.1 Create subscription form
+- [x] 12. Build subscription form component
+
+
+
+
+
+
+  - [x] 12.1 Create subscription form
+
     - Build `src/components/subscription-form.tsx` with React Hook Form
     - Integrate Zod validation schema
     - Implement conditional password field (hide for Google/GitHub login)
     - Add next payment date preview based on cycle selection
     - _Requirements: 6.2, 6.3, 4.3_
-  - [ ] 12.2 Create form wrapper with Sheet/Drawer
+
+  - [x] 12.2 Create form wrapper with Sheet/Drawer
+
     - Build `src/components/subscription-sheet.tsx` for mobile-friendly form
     - Integrate toast notifications for success/error
     - _Requirements: 6.1, 6.4, 6.5_
 
-- [ ] 13. Build dashboard UI components
-  - [ ] 13.1 Create summary cards component
+- [x] 13. Build dashboard UI components
+
+
+
+
+
+
+  - [x] 13.1 Create summary cards component
+
     - Build `src/components/summary-cards.tsx`
     - Display total monthly spending, active count, trials ending soon
     - Apply warning styling for trials
     - _Requirements: 5.1, 5.2, 5.3_
-  - [ ] 13.2 Create subscription card component
+
+  - [x] 13.2 Create subscription card component
+
     - Build `src/components/subscription-card.tsx`
     - Display name, price, next payment date, category
     - Highlight items within reminder days
     - Include edit/delete actions
     - _Requirements: 5.6_
-  - [ ] 13.3 Create subscription list component
+
+  - [x] 13.3 Create subscription list component
+
     - Build `src/components/subscription-list.tsx`
     - Implement responsive grid (desktop) / list (mobile) layout
     - Integrate filtering by category and status
