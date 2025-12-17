@@ -27,40 +27,61 @@
     - Create test setup file for common utilities
     - _Requirements: 2.6_
 
-- [ ] 2. Implement core utility functions
-  - [ ] 2.1 Create payment method masking utilities
+- [x] 2. Implement core utility functions
+
+
+
+
+
+  - [x] 2.1 Create payment method masking utilities
+
+
     - Implement `maskPaymentMethod(fullNumber: string): string` in `src/lib/masking.ts`
     - Implement `extractLastFourDigits(fullNumber: string): string`
     - Handle edge cases: short numbers, non-numeric characters
     - _Requirements: 3.1, 3.3_
-  - [ ] 2.2 Write property test for payment masking
+
+  - [x] 2.2 Write property test for payment masking
+
     - **Property 7: Payment Method Masking**
     - **Validates: Requirements 3.1, 3.3**
-  - [ ] 2.3 Create password encryption utilities
+  - [x] 2.3 Create password encryption utilities
+
+
     - Implement `encryptPassword(plainText: string): string` in `src/lib/encryption.ts`
     - Implement `decryptPassword(cipherText: string): string`
     - Use AES encryption with server-side ENCRYPTION_KEY env variable
     - _Requirements: 4.1, 4.2_
-  - [ ] 2.4 Write property test for password encryption round-trip
+
+  - [x] 2.4 Write property test for password encryption round-trip
+
     - **Property 8: Password Encryption Round-Trip**
     - **Validates: Requirements 4.1, 4.2**
-  - [ ] 2.5 Create date calculation utilities
+
+  - [x] 2.5 Create date calculation utilities
+
     - Implement `calculateNextPaymentDate(startDate: Date, billingCycle: BillingCycle): Date` in `src/lib/date-utils.ts`
     - Implement `isWithinReminderDays(nextPaymentDate: Date, reminderDays: number): boolean`
     - Implement `advancePaymentDate(currentNextDate: Date, billingCycle: BillingCycle): Date`
     - Use date-fns for date manipulation
     - _Requirements: 2.2, 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ] 2.6 Write property tests for date calculations
+
+  - [x] 2.6 Write property tests for date calculations
+
     - **Property 3: Next Payment Date Calculation**
     - **Property 12: Reminder Days Highlighting**
     - **Property 15: Payment Date Advancement**
     - **Validates: Requirements 2.2, 5.6, 10.1-10.5**
-  - [ ] 2.7 Create subscription serialization utilities
+
+  - [x] 2.7 Create subscription serialization utilities
+
     - Implement `serializeSubscription(subscription: Subscription): string` in `src/lib/serialization.ts`
     - Implement `deserializeSubscription(json: string): Subscription`
     - Handle date serialization/deserialization correctly
     - _Requirements: 2.7, 2.8_
-  - [ ] 2.8 Write property test for serialization round-trip
+
+  - [x] 2.8 Write property test for serialization round-trip
+
     - **Property 6: Subscription Serialization Round-Trip**
     - **Validates: Requirements 2.7, 2.8**
 
