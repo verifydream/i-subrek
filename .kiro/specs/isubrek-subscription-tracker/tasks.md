@@ -181,17 +181,31 @@
     - **Property 14: Category and Status Filtering**
     - **Validates: Requirements 9.2, 9.3**
 
-- [ ] 8. Implement Google Calendar integration
-  - [ ] 8.1 Create calendar URL generator
+- [x] 8. Implement Google Calendar integration
+
+
+
+
+
+
+  - [x] 8.1 Create calendar URL generator
+
     - Implement `generateGoogleCalendarUrl(subscription: Subscription): string` in `src/lib/calendar.ts`
     - Include event title "Renew [name]", date, and description
     - Properly encode URL parameters
     - _Requirements: 7.1, 7.2, 7.3_
-  - [ ] 8.2 Write property test for calendar URL generation
+
+  - [x] 8.2 Write property test for calendar URL generation
+
     - **Property 13: Google Calendar URL Generation**
     - **Validates: Requirements 7.1, 7.2, 7.3**
 
-- [ ] 9. Checkpoint - Ensure all tests pass
+- [x] 9. Checkpoint - Ensure all tests pass
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 10. Set up Clerk authentication
