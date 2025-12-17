@@ -141,25 +141,43 @@
     - Verify user ownership before decryption
     - _Requirements: 4.2, 4.5_
 
-- [ ] 6. Checkpoint - Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
+
+
+
+
+
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Implement dashboard calculation utilities
-  - [ ] 7.1 Create dashboard calculation functions
+- [x] 7. Implement dashboard calculation utilities
+
+
+
+
+
+
+  - [x] 7.1 Create dashboard calculation functions
+
     - Implement `calculateTotalMonthlySpending(subscriptions: Subscription[]): number` in `src/lib/calculations.ts`
     - Implement `countActiveSubscriptions(subscriptions: Subscription[]): number`
     - Implement `getTrialsEndingSoon(subscriptions: Subscription[], thresholdDays: number): Subscription[]`
     - _Requirements: 5.1, 5.2, 5.3_
-  - [ ] 7.2 Write property tests for dashboard calculations
+  - [x] 7.2 Write property tests for dashboard calculations
+
+
     - **Property 9: Total Monthly Spending Calculation**
     - **Property 10: Active Subscription Count**
     - **Property 11: Trials Ending Soon Filter**
     - **Validates: Requirements 5.1, 5.2, 5.3**
-  - [ ] 7.3 Create filtering utilities
+
+  - [x] 7.3 Create filtering utilities
+
     - Implement `filterByCategory(subscriptions: Subscription[], category: Category): Subscription[]` in `src/lib/filtering.ts`
     - Implement `filterByStatus(subscriptions: Subscription[], status: Status): Subscription[]`
     - _Requirements: 9.2, 9.3_
-  - [ ] 7.4 Write property test for filtering
+  - [x] 7.4 Write property test for filtering
+
+
     - **Property 14: Category and Status Filtering**
     - **Validates: Requirements 9.2, 9.3**
 
