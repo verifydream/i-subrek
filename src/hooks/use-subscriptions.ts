@@ -86,6 +86,7 @@ export function useCreateSubscription(userId: string) {
           accountPasswordEncrypted: newSubscription.accountPassword ? "encrypted" : null,
           notes: newSubscription.notes || null,
           category: newSubscription.category || null,
+          url: newSubscription.url || null,
           status: "active",
           createdAt: new Date(),
           updatedAt: new Date(),

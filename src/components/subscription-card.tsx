@@ -85,8 +85,10 @@ export function SubscriptionCard({
   return (
     <Card
       className={cn(
-        "transition-all hover:shadow-md cursor-pointer",
-        isHighlighted && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
+        "group relative overflow-hidden transition-all duration-300 ease-out cursor-pointer",
+        "hover:shadow-lg hover:-translate-y-1 hover:border-primary/50",
+        "active:scale-[0.98]",
+        isHighlighted && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 animate-pulse-border"
       )}
       onClick={onClick}
     >
@@ -133,31 +135,33 @@ export function SubscriptionCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold">
+      <CardContent className="space-y-3 pt-0">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-bold tracking-tight">
             {formatCurrency(subscription.price, subscription.currency)}
           </span>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground font-medium">
             {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />
-          <span>
-            {isHighlighted ? (
-              <span className="font-medium text-amber-600 dark:text-amber-400">
-                Due {format(nextPaymentDate, "MMM d, yyyy")}
-              </span>
-            ) : (
-              <span>Next: {format(nextPaymentDate, "MMM d, yyyy")}</span>
-            )}
-          </span>
+        <div className="flex items-center gap-2 text-sm">
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-md",
+            isHighlighted 
+              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" 
+              : "bg-muted/50 text-muted-foreground"
+          )}>
+            <Calendar className="h-3.5 w-3.5" />
+            <span className="font-medium">
+              {isHighlighted ? "Due " : "Next: "}
+              {format(nextPaymentDate, "MMM d, yyyy")}
+            </span>
+          </div>
         </div>
         {subscription.status !== "active" && (
           <span
             className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+              "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide",
               subscription.status === "cancelled"
                 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                 : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -166,6 +170,8 @@ export function SubscriptionCard({
             {subscription.status}
           </span>
         )}
+        {/* Hover indicator */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
       </CardContent>
     </Card>
   );

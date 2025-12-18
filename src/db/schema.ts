@@ -19,13 +19,6 @@ export const billingCycleEnum = pgEnum("billing_cycle", [
 
 export const statusEnum = pgEnum("status", ["active", "cancelled", "expired"]);
 
-export const categoryEnum = pgEnum("category", [
-  "Entertainment",
-  "Tools",
-  "Work",
-  "Utilities",
-]);
-
 // Subscriptions table
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -42,7 +35,8 @@ export const subscriptions = pgTable("subscriptions", {
   accountEmail: text("account_email"),
   accountPasswordEncrypted: text("account_password_encrypted"),
   notes: text("notes"),
-  category: categoryEnum("category"),
+  category: text("category"), // Changed from enum to text for custom categories
+  url: text("url"), // Subscription URL (optional)
   status: statusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -58,5 +52,5 @@ export type BillingCycle = "monthly" | "yearly" | "one-time" | "trial";
 // Status Type
 export type Status = "active" | "cancelled" | "expired";
 
-// Category Type
-export type Category = "Entertainment" | "Tools" | "Work" | "Utilities";
+// Category Type (now supports custom categories)
+export type Category = string;

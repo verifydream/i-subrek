@@ -95,6 +95,7 @@ export async function createSubscription(
         accountPasswordEncrypted: encryptedPassword,
         notes: data.notes || null,
         category: data.category || null,
+        url: data.url || null,
         status: "active",
       })
       .returning();
@@ -179,6 +180,7 @@ export async function updateSubscription(
       updateData.accountEmail = data.accountEmail || null;
     if (data.notes !== undefined) updateData.notes = data.notes || null;
     if (data.category !== undefined) updateData.category = data.category || null;
+    if (data.url !== undefined) updateData.url = data.url || null;
     if (data.status !== undefined) updateData.status = data.status;
 
     // Handle start date and billing cycle changes - recalculate next payment date

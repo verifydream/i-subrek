@@ -12,9 +12,11 @@ import { Calendar, CreditCard, Mail, FileText, Edit, Trash2 } from "lucide-react
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { PasswordCopyButton } from "@/components/password-copy-button";
 import { CalendarButton } from "@/components/calendar-button";
@@ -83,15 +85,18 @@ export function SubscriptionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b bg-muted/30">
+          <VisuallyHidden>
+            <DialogDescription>Details for {subscription.name} subscription</DialogDescription>
+          </VisuallyHidden>
           <div className="flex items-start justify-between pr-8">
-            <div>
-              <DialogTitle className="text-xl">{subscription.name}</DialogTitle>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <div className="space-y-2">
+              <DialogTitle className="text-2xl font-bold">{subscription.name}</DialogTitle>
+              <div className="flex flex-wrap gap-2">
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
                     getStatusColor(subscription.status as Status)
                   )}
                 >
@@ -100,7 +105,7 @@ export function SubscriptionDetailDialog({
                 {subscription.category && (
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
                       getCategoryColor(subscription.category)
                     )}
                   >
@@ -112,58 +117,62 @@ export function SubscriptionDetailDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="p-6 space-y-5">
           {/* Price */}
-          <div className="text-center py-4 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground">Price</p>
-            <p className="text-3xl font-bold">
+          <div className="text-center py-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">Price</p>
+            <p className="text-4xl font-bold mt-1 tracking-tight">
               {formatCurrency(subscription.price, subscription.currency)}
             </p>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mt-1 font-medium">
               {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
             </p>
           </div>
 
           {/* Payment Schedule */}
-          <div className="rounded-lg border p-4">
-            <h3 className="flex items-center gap-2 text-sm font-medium mb-3">
-              <Calendar className="h-4 w-4" />
+          <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Calendar className="h-4 w-4 text-primary" />
+              </div>
               Payment Schedule
             </h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">Next Payment</p>
-                <p className="font-medium">{format(nextPaymentDate, "MMM d, yyyy")}</p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Next Payment</p>
+                <p className="font-semibold">{format(nextPaymentDate, "MMM d, yyyy")}</p>
               </div>
-              <div>
-                <p className="text-muted-foreground">Start Date</p>
-                <p className="font-medium">{format(startDate, "MMM d, yyyy")}</p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Start Date</p>
+                <p className="font-semibold">{format(startDate, "MMM d, yyyy")}</p>
               </div>
-              <div>
-                <p className="text-muted-foreground">Reminder</p>
-                <p className="font-medium">{subscription.reminderDays} days before</p>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Reminder</p>
+                <p className="font-semibold">{subscription.reminderDays} days before</p>
               </div>
             </div>
           </div>
 
           {/* Payment Method */}
           {(subscription.paymentMethodProvider || subscription.paymentMethodNumber) && (
-            <div className="rounded-lg border p-4">
-              <h3 className="flex items-center gap-2 text-sm font-medium mb-3">
-                <CreditCard className="h-4 w-4" />
+            <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="p-1.5 rounded-lg bg-blue-500/10">
+                  <CreditCard className="h-4 w-4 text-blue-500" />
+                </div>
                 Payment Method
               </h3>
-              <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 {subscription.paymentMethodProvider && (
-                  <div>
-                    <p className="text-muted-foreground">Provider</p>
-                    <p className="font-medium">{subscription.paymentMethodProvider}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Provider</p>
+                    <p className="font-semibold">{subscription.paymentMethodProvider}</p>
                   </div>
                 )}
                 {subscription.paymentMethodNumber && (
-                  <div>
-                    <p className="text-muted-foreground">Card Number</p>
-                    <p className="font-mono font-medium">{subscription.paymentMethodNumber}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Card Number</p>
+                    <p className="font-mono font-semibold">{subscription.paymentMethodNumber}</p>
                   </div>
                 )}
               </div>
@@ -172,18 +181,20 @@ export function SubscriptionDetailDialog({
 
           {/* Account Details */}
           {subscription.accountEmail && (
-            <div className="rounded-lg border p-4">
-              <h3 className="flex items-center gap-2 text-sm font-medium mb-3">
-                <Mail className="h-4 w-4" />
+            <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="p-1.5 rounded-lg bg-green-500/10">
+                  <Mail className="h-4 w-4 text-green-500" />
+                </div>
                 Account Details
               </h3>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium">{subscription.accountEmail}</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Email</p>
+                  <p className="font-semibold break-all">{subscription.accountEmail}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Password</p>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Password</p>
                   <PasswordCopyButton
                     subscriptionId={subscription.id}
                     hasPassword={!!subscription.accountPasswordEncrypted}
@@ -195,21 +206,23 @@ export function SubscriptionDetailDialog({
 
           {/* Notes */}
           {subscription.notes && (
-            <div className="rounded-lg border p-4">
-              <h3 className="flex items-center gap-2 text-sm font-medium mb-2">
-                <FileText className="h-4 w-4" />
+            <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="p-1.5 rounded-lg bg-purple-500/10">
+                  <FileText className="h-4 w-4 text-purple-500" />
+                </div>
                 Notes
               </h3>
-              <p className="text-sm whitespace-pre-wrap">{subscription.notes}</p>
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{subscription.notes}</p>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-3">
             <CalendarButton subscription={subscription} />
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-11 font-medium"
               onClick={() => {
                 onOpenChange(false);
                 onEdit(subscription.id);
@@ -220,6 +233,7 @@ export function SubscriptionDetailDialog({
             </Button>
             <Button
               variant="destructive"
+              className="h-11"
               onClick={() => {
                 onOpenChange(false);
                 onDelete(subscription.id);
@@ -230,10 +244,10 @@ export function SubscriptionDetailDialog({
           </div>
 
           {/* Timestamps */}
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-2">
-            <span>Created: {format(new Date(subscription.createdAt), "MMM d, yyyy")}</span>
-            <span>•</span>
-            <span>Updated: {format(new Date(subscription.updatedAt), "MMM d, yyyy")}</span>
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground pt-3 pb-2 border-t mt-4">
+            <span>Created {format(new Date(subscription.createdAt), "MMM d, yyyy")}</span>
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+            <span>Updated {format(new Date(subscription.updatedAt), "MMM d, yyyy")}</span>
           </div>
         </div>
       </DialogContent>
