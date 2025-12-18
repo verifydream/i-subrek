@@ -343,22 +343,10 @@ export function SettingsClient({
           </Dialog>
         </div>
 
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-2">Default Categories:</p>
-          <div className="flex flex-wrap gap-2">
-            {["General", "Entertainment", "Tools", "Work", "Utilities"].map((cat) => (
-              <span key={cat} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-muted">
-                {cat}
-              </span>
-            ))}
-          </div>
-        </div>
-
         {categories.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No custom categories yet.</p>
+          <p className="text-muted-foreground text-sm">No categories yet.</p>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-2">Custom Categories:</p>
             {categories.map((cat) => (
               <div key={cat.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
                 <div className="flex items-center gap-2">

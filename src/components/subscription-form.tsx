@@ -41,14 +41,7 @@ import type { Subscription } from "@/db/schema";
 import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
 import { cn } from "@/lib/utils";
 
-// Default categories
-const defaultCategories = [
-  { name: "General", color: "#6b7280" },
-  { name: "Entertainment", color: "#8b5cf6" },
-  { name: "Tools", color: "#3b82f6" },
-  { name: "Work", color: "#22c55e" },
-  { name: "Utilities", color: "#f97316" },
-];
+
 
 // Login method options
 const loginMethodOptions = [
@@ -83,11 +76,8 @@ export function SubscriptionForm({
 }: SubscriptionFormProps) {
   const isEditMode = !!subscription;
 
-  // Combine default and custom categories
-  const allCategories = [
-    ...defaultCategories,
-    ...categories.map((c) => ({ name: c.name, color: c.color || "#6366f1" })),
-  ];
+  // Categories from master data
+  const allCategories = categories.map((c) => ({ name: c.name, color: c.color || "#6366f1" }));
 
   // State
   const [loginMethod, setLoginMethod] = React.useState<LoginMethod>("email");

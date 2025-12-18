@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { getPaymentMethods, getAccountCredentials, getCategories } from "@/actions/master-data";
+import { getPaymentMethods, getAccountCredentials, getCategoriesWithSeed } from "@/actions/master-data";
 import { SettingsClient } from "./settings-client";
 
 export default async function SettingsPage() {
@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   const [paymentMethods, accountCredentials, categories] = await Promise.all([
     getPaymentMethods(userId),
     getAccountCredentials(userId),
-    getCategories(userId),
+    getCategoriesWithSeed(userId),
   ]);
 
   return (

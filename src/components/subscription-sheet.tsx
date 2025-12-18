@@ -25,7 +25,7 @@ import {
   useCreateSubscription,
   useUpdateSubscription,
 } from "@/hooks/use-subscriptions";
-import { getPaymentMethods, getAccountCredentials, getCategories } from "@/actions/master-data";
+import { getPaymentMethods, getAccountCredentials, getCategoriesWithSeed } from "@/actions/master-data";
 import type { CreateSubscriptionInput } from "@/lib/validations";
 import type { Subscription } from "@/db/schema";
 import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
@@ -70,7 +70,7 @@ export function SubscriptionSheet({
       Promise.all([
         getPaymentMethods(userId),
         getAccountCredentials(userId),
-        getCategories(userId),
+        getCategoriesWithSeed(userId),
       ]).then(([methods, credentials, cats]) => {
         setPaymentMethods(methods);
         setAccountCredentials(credentials);

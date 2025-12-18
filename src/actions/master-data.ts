@@ -233,8 +233,69 @@ export async function decryptCredentialPassword(
 
 // ============ CUSTOM CATEGORIES ============
 
+// Default categories to seed for new users
+const DEFAULT_CATEGORIES = [
+  { name: "General", color: "#6b7280" },
+  { name: "Entertainment", color: "#8b5cf6" },
+  { name: "Tools", color: "#3b82f6" },
+  { name: "Work", color: "#22c55e" },
+  { name: "Utilities", color: "#f97316" },
+];
+
 export async function getCategories(userId: string) {
   try {
+    const categories = await db
+      .select()
+      .from(customCategories)
+      .where(eq(customCategories.userId, userId))
+      .orderBy(customCategories.createdAt);
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+// Seed default categories for a new user (only adds missing defaults)
+export async function seedDefaultCategories(userId: string): Promise<void> {
+  try {
+    // Get existing category names
+    const existing = await db
+      .select({ name: customCategories.name })
+      .from(customCategories)
+      .where(eq(customCategories.userId, userId));
+
+    const existingNames = new Set(existing.map((c) => c.name));
+
+    // Find missing default categories
+    const missingDefaults = DEFAULT_CATEGORIES.filter(
+      (cat) => !existingNames.has(cat.name)
+    );
+
+    if (missingDefaults.length === 0) {
+      return; // All defaults exist
+    }
+
+    // Insert missing default categories
+    await db.insert(customCategories).values(
+      missingDefaults.map((cat) => ({
+        userId,
+        name: cat.name,
+        color: cat.color,
+      }))
+    );
+  } catch (error) {
+    console.error("Error seeding default categories:", error);
+  }
+}
+
+// Get categories with auto-seed for new users
+export async function getCategoriesWithSeed(userId: string) {
+  try {
+    // First try to seed if needed
+    await seedDefaultCategories(userId);
+    
+    // Then fetch all categories
     const categories = await db
       .select()
       .from(customCategories)
