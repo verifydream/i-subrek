@@ -107,18 +107,35 @@ export function SubscriptionForm({
     }
   }, [accountCredentials.length, isEditMode]);
 
-  // Set initial category from subscription
+  // Set initial values from subscription (edit mode)
   React.useEffect(() => {
-    if (subscription?.category) {
-      setSelectedCategory(subscription.category);
+    if (subscription) {
+      // Set category
+      if (subscription.category) {
+        setSelectedCategory(subscription.category);
+      }
+      // Set dates from subscription
+      if (subscription.startDate) {
+        const start = new Date(subscription.startDate);
+        setStartDate(start);
+        setStartDateForDays(start);
+      }
+      if (subscription.nextPaymentDate) {
+        const end = new Date(subscription.nextPaymentDate);
+        setEndDate(end);
+        // Calculate duration
+        const start = subscription.startDate ? new Date(subscription.startDate) : new Date();
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        setDurationDays(days > 0 ? days : 30);
+      }
     }
-  }, [subscription?.category]);
+  }, [subscription]);
 
   const form = useForm<CreateSubscriptionFormInput>({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
       name: subscription?.name ?? "",
-      price: subscription?.price ? parseFloat(subscription.price) : undefined,
+      price: subscription?.price ? parseFloat(subscription.price) : 100, // Default 100 for IDR
       currency: (subscription?.currency as "IDR" | "USD") ?? "IDR",
       billingCycle: "monthly", // Will be calculated from dates
       startDate: subscription?.startDate ? new Date(subscription.startDate) : new Date(),
@@ -134,6 +151,15 @@ export function SubscriptionForm({
   });
 
   const watchedCurrency = form.watch("currency");
+
+  // Update default price when currency changes
+  React.useEffect(() => {
+    const currentPrice = form.getValues("price");
+    // Only set default if price is empty or is the default value
+    if (!currentPrice || currentPrice === 100 || currentPrice === 1) {
+      form.setValue("price", watchedCurrency === "IDR" ? 100 : 1);
+    }
+  }, [watchedCurrency, form]);
 
   // Handle form submission
   const handleSubmit = async (data: CreateSubscriptionFormInput) => {

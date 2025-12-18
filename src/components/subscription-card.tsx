@@ -121,12 +121,20 @@ export function SubscriptionCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(subscription.id)}>
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(subscription.id);
+              }}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => onDelete(subscription.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(subscription.id);
+              }}
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />

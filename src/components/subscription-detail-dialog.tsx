@@ -7,7 +7,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar, CreditCard, Mail, FileText, Edit, Trash2 } from "lucide-react";
+import { Calendar, CreditCard, Mail, FileText, Edit, Trash2, Link as LinkIcon } from "lucide-react";
 
 import {
   Dialog,
@@ -128,6 +128,26 @@ export function SubscriptionDetailDialog({
               {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
             </p>
           </div>
+
+          {/* URL */}
+          {subscription.url && (
+            <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10">
+                  <LinkIcon className="h-4 w-4 text-indigo-500" />
+                </div>
+                Subscription URL
+              </h3>
+              <a 
+                href={subscription.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline break-all"
+              >
+                {subscription.url}
+              </a>
+            </div>
+          )}
 
           {/* Payment Schedule */}
           <div className="rounded-xl border p-4 space-y-3 hover:border-primary/30 transition-colors">
