@@ -86,11 +86,28 @@ export function SubscriptionForm({
   // Track login method for conditional password field
   const [loginMethod, setLoginMethod] = React.useState<LoginMethod>("email");
   
-  // Track whether using saved master data or manual input
+  // Track whether using saved master data or manual input (default to master data if available)
   const [usePaymentMaster, setUsePaymentMaster] = React.useState(false);
   const [useCredentialMaster, setUseCredentialMaster] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string>("");
   const [selectedCredentialId, setSelectedCredentialId] = React.useState<string>("");
+  
+  // Track date input mode: "date" for picking expiry date, "days" for entering duration
+  const [dateInputMode, setDateInputMode] = React.useState<"date" | "days">("date");
+  const [durationDays, setDurationDays] = React.useState<number>(30);
+
+  // Update master data mode when data is loaded (default to master data if available)
+  React.useEffect(() => {
+    if (paymentMethods.length > 0 && !isEditMode) {
+      setUsePaymentMaster(true);
+    }
+  }, [paymentMethods.length, isEditMode]);
+
+  React.useEffect(() => {
+    if (accountCredentials.length > 0 && !isEditMode) {
+      setUseCredentialMaster(true);
+    }
+  }, [accountCredentials.length, isEditMode]);
 
   // Initialize form with default values or existing subscription data
   const form = useForm<CreateSubscriptionFormInput>({
@@ -247,36 +264,110 @@ export function SubscriptionForm({
           )}
         />
 
-        {/* Start Date Field */}
-        <FormField
-          control={form.control}
-          name="startDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Start Date</FormLabel>
-              <FormControl>
-                <DatePicker
-                  date={field.value}
-                  onDateChange={field.onChange}
-                  placeholder="Select start date"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Next Payment Date Preview */}
-        {nextPaymentPreview && (
-          <div className="rounded-md bg-muted p-3">
-            <p className="text-sm text-muted-foreground">
-              Next payment date:{" "}
-              <span className="font-medium text-foreground">
-                {format(nextPaymentPreview, "PPP")}
-              </span>
-            </p>
+        {/* Date Input Section */}
+        <div className="space-y-4 rounded-md border p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">Subscription Period</h3>
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant={dateInputMode === "date" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setDateInputMode("date")}
+              >
+                Pilih Tanggal
+              </Button>
+              <Button
+                type="button"
+                variant={dateInputMode === "days" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setDateInputMode("days")}
+              >
+                Input Hari
+              </Button>
+            </div>
           </div>
-        )}
+
+          {dateInputMode === "date" ? (
+            <>
+              {/* Start Date Field */}
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date (default: hari ini)</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select start date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Next Payment Date Preview */}
+              {nextPaymentPreview && (
+                <div className="rounded-md bg-muted/50 p-3">
+                  <p className="text-sm text-muted-foreground">
+                    Next payment date:{" "}
+                    <span className="font-medium text-foreground">
+                      {format(nextPaymentPreview, "PPP")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Duration in Days */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Durasi Langganan (hari)</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={durationDays}
+                  onChange={(e) => {
+                    const days = parseInt(e.target.value) || 1;
+                    setDurationDays(days);
+                    // Calculate expiry date from today
+                    const today = new Date();
+                    const expiryDate = new Date(today);
+                    expiryDate.setDate(today.getDate() + days);
+                    form.setValue("startDate", today);
+                  }}
+                  placeholder="e.g., 30"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Masukkan jumlah hari langganan (misal: 28, 30, 365)
+                </p>
+              </div>
+
+              {/* Calculated Dates Preview */}
+              <div className="rounded-md bg-muted/50 p-3 space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Start date:{" "}
+                  <span className="font-medium text-foreground">
+                    {format(new Date(), "PPP")} (hari ini)
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Expired date:{" "}
+                  <span className="font-medium text-foreground">
+                    {format(
+                      new Date(new Date().setDate(new Date().getDate() + durationDays)),
+                      "PPP"
+                    )}
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Reminder Days Field */}
         <FormField
@@ -345,14 +436,15 @@ export function SubscriptionForm({
                 size="sm"
                 onClick={() => {
                   setUsePaymentMaster(!usePaymentMaster);
-                  if (!usePaymentMaster) {
+                  if (usePaymentMaster) {
+                    // Switching to manual - clear fields
                     form.setValue("paymentMethodProvider", "");
                     form.setValue("paymentMethodNumber", "");
                   }
                   setSelectedPaymentId("");
                 }}
               >
-                {usePaymentMaster ? "Input Manual" : "Pilih Tersimpan"}
+                {usePaymentMaster ? "Input Custom" : "Pilih Tersimpan"}
               </Button>
             )}
           </div>
@@ -442,14 +534,15 @@ export function SubscriptionForm({
                 size="sm"
                 onClick={() => {
                   setUseCredentialMaster(!useCredentialMaster);
-                  if (!useCredentialMaster) {
+                  if (useCredentialMaster) {
+                    // Switching to manual - clear fields
                     form.setValue("accountEmail", "");
                     form.setValue("accountPassword", "");
                   }
                   setSelectedCredentialId("");
                 }}
               >
-                {useCredentialMaster ? "Input Manual" : "Pilih Tersimpan"}
+                {useCredentialMaster ? "Input Custom" : "Pilih Tersimpan"}
               </Button>
             )}
           </div>

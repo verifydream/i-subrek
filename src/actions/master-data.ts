@@ -1,11 +1,11 @@
 "use server";
 
 /**
- * Server Actions for Master Data (Payment Methods & Account Credentials)
+ * Server Actions for Master Data (Payment Methods, Account Credentials & Categories)
  */
 
 import { db } from "@/db";
-import { paymentMethods, accountCredentials } from "@/db/master-schema";
+import { paymentMethods, accountCredentials, customCategories } from "@/db/master-schema";
 import { eq, and } from "drizzle-orm";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 import { maskPaymentMethod } from "@/lib/masking";
@@ -168,5 +168,63 @@ export async function decryptCredentialPassword(
   } catch (error) {
     console.error("Error decrypting password:", error);
     return { success: false, error: "Failed to decrypt password" };
+  }
+}
+
+
+// ============ CUSTOM CATEGORIES ============
+
+export async function getCategories(userId: string) {
+  try {
+    const categories = await db
+      .select()
+      .from(customCategories)
+      .where(eq(customCategories.userId, userId))
+      .orderBy(customCategories.createdAt);
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+export async function createCategory(
+  userId: string,
+  input: { name: string; color?: string }
+): Promise<ActionResult<typeof customCategories.$inferSelect>> {
+  try {
+    const [category] = await db
+      .insert(customCategories)
+      .values({
+        userId,
+        name: input.name,
+        color: input.color ?? "#6366f1",
+      })
+      .returning();
+
+    return { success: true, data: category };
+  } catch (error) {
+    console.error("Error creating category:", error);
+    return { success: false, error: "Failed to create category" };
+  }
+}
+
+export async function deleteCategory(
+  userId: string,
+  categoryId: string
+): Promise<ActionResult<void>> {
+  try {
+    await db
+      .delete(customCategories)
+      .where(
+        and(
+          eq(customCategories.id, categoryId),
+          eq(customCategories.userId, userId)
+        )
+      );
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return { success: false, error: "Failed to delete category" };
   }
 }

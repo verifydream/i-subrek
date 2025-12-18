@@ -9,7 +9,6 @@
  */
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { Plus, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SubscriptionCard } from "@/components/subscription-card";
+import { SubscriptionDetailDialog } from "@/components/subscription-detail-dialog";
 import { filterByCategory, filterByStatus } from "@/lib/filtering";
 import type { Subscription, Category, Status } from "@/db/schema";
 
@@ -62,10 +62,11 @@ export function SubscriptionList({
   onDelete,
   onAdd,
 }: SubscriptionListProps) {
-  const router = useRouter();
   const [categoryFilter, setCategoryFilter] = React.useState<Category | "all">("all");
   const [statusFilter, setStatusFilter] = React.useState<Status | "all">("all");
   const [sortBy, setSortBy] = React.useState<SortOption>("date-asc");
+  const [selectedSubscription, setSelectedSubscription] = React.useState<Subscription | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = React.useState(false);
 
   // Apply filters and sorting
   const filteredSubscriptions = React.useMemo(() => {
@@ -104,11 +105,20 @@ export function SubscriptionList({
     return result;
   }, [subscriptions, categoryFilter, statusFilter, sortBy]);
 
-  const handleCardClick = (id: string) => {
-    router.push(`/subscriptions/${id}`);
+  const handleCardClick = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setDetailDialogOpen(true);
   };
 
   return (
+    <>
+      <SubscriptionDetailDialog
+        subscription={selectedSubscription}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
     <div className="space-y-4">
       {/* Filter & Sort Controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -192,7 +202,7 @@ export function SubscriptionList({
               subscription={subscription}
               onEdit={onEdit}
               onDelete={onDelete}
-              onClick={() => handleCardClick(subscription.id)}
+              onClick={() => handleCardClick(subscription)}
             />
           ))}
         </div>
@@ -205,5 +215,6 @@ export function SubscriptionList({
         </p>
       )}
     </div>
+    </>
   );
 }

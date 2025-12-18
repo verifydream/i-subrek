@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CreditCard, Key, Plus, Trash2, Copy, Check } from "lucide-react";
+import { CreditCard, Key, Plus, Trash2, Copy, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,24 +21,30 @@ import {
   createAccountCredential,
   deleteAccountCredential,
   decryptCredentialPassword,
+  createCategory,
+  deleteCategory,
 } from "@/actions/master-data";
-import type { PaymentMethod, AccountCredential } from "@/db/master-schema";
+import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
 
-interface ProfileClientProps {
+interface SettingsClientProps {
   userId: string;
   initialPaymentMethods: PaymentMethod[];
   initialCredentials: AccountCredential[];
+  initialCategories: CustomCategory[];
 }
 
-export function ProfileClient({
+export function SettingsClient({
   userId,
   initialPaymentMethods,
   initialCredentials,
-}: ProfileClientProps) {
+  initialCategories,
+}: SettingsClientProps) {
   const [paymentMethods, setPaymentMethods] = React.useState(initialPaymentMethods);
   const [credentials, setCredentials] = React.useState(initialCredentials);
+  const [categories, setCategories] = React.useState(initialCategories);
   const [isAddingPayment, setIsAddingPayment] = React.useState(false);
   const [isAddingCredential, setIsAddingCredential] = React.useState(false);
+  const [isAddingCategory, setIsAddingCategory] = React.useState(false);
 
   // Payment Method Form
   const [paymentName, setPaymentName] = React.useState("");
@@ -49,6 +55,10 @@ export function ProfileClient({
   const [credName, setCredName] = React.useState("");
   const [credEmail, setCredEmail] = React.useState("");
   const [credPassword, setCredPassword] = React.useState("");
+
+  // Category Form
+  const [categoryName, setCategoryName] = React.useState("");
+  const [categoryColor, setCategoryColor] = React.useState("#6366f1");
 
   const handleAddPaymentMethod = async () => {
     if (!paymentName || !paymentProvider) {
@@ -128,8 +138,133 @@ export function ProfileClient({
     }
   };
 
+  const handleAddCategory = async () => {
+    if (!categoryName) {
+      toast.error("Please enter category name");
+      return;
+    }
+
+    const result = await createCategory(userId, {
+      name: categoryName,
+      color: categoryColor,
+    });
+
+    if (result.success && result.data) {
+      setCategories([...categories, result.data]);
+      setCategoryName("");
+      setCategoryColor("#6366f1");
+      setIsAddingCategory(false);
+      toast.success("Category added");
+    } else {
+      toast.error(result.error || "Failed to add category");
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const result = await deleteCategory(userId, id);
+    if (result.success) {
+      setCategories(categories.filter((c) => c.id !== id));
+      toast.success("Category deleted");
+    } else {
+      toast.error(result.error || "Failed to delete");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Categories Section */}
+      <div className="rounded-lg border bg-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Categories</h2>
+          </div>
+          <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Add
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Category</DialogTitle>
+                <DialogDescription>
+                  Create a custom category for organizing subscriptions.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label>Name *</Label>
+                  <Input
+                    placeholder="e.g., Gaming, Education"
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      type="color"
+                      value={categoryColor}
+                      onChange={(e) => setCategoryColor(e.target.value)}
+                      className="w-16 h-10 p-1"
+                    />
+                    <span className="text-sm text-muted-foreground">{categoryColor}</span>
+                  </div>
+                </div>
+                <Button onClick={handleAddCategory} className="w-full">
+                  Save Category
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-sm text-muted-foreground mb-2">Default Categories:</p>
+          <div className="flex flex-wrap gap-2">
+            {["Entertainment", "Tools", "Work", "Utilities"].map((cat) => (
+              <span
+                key={cat}
+                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-muted"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {categories.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No custom categories yet.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground mb-2">Custom Categories:</p>
+            {categories.map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center justify-between p-3 rounded-md bg-muted/50"
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: cat.color || "#6366f1" }}
+                  />
+                  <span className="font-medium">{cat.name}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteCategory(cat.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Payment Methods Section */}
       <div className="rounded-lg border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
@@ -195,7 +330,7 @@ export function ProfileClient({
                 <div>
                   <p className="font-medium">{method.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {method.provider} {method.lastFourDigits && `• ${method.lastFourDigits}`}
+                    {method.provider} {method.lastFourDigits && `• ****${method.lastFourDigits}`}
                   </p>
                 </div>
                 <Button
