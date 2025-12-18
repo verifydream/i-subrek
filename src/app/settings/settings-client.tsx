@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CreditCard, Key, Plus, Trash2, Copy, Tag } from "lucide-react";
+import { CreditCard, Key, Plus, Trash2, Copy, Tag, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,14 @@ import {
 } from "@/components/ui/dialog";
 import {
   createPaymentMethod,
+  updatePaymentMethod,
   deletePaymentMethod,
   createAccountCredential,
+  updateAccountCredential,
   deleteAccountCredential,
   decryptCredentialPassword,
   createCategory,
+  updateCategory,
   deleteCategory,
 } from "@/actions/master-data";
 import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
@@ -42,9 +45,16 @@ export function SettingsClient({
   const [paymentMethods, setPaymentMethods] = React.useState(initialPaymentMethods);
   const [credentials, setCredentials] = React.useState(initialCredentials);
   const [categories, setCategories] = React.useState(initialCategories);
+  
+  // Dialog states
   const [isAddingPayment, setIsAddingPayment] = React.useState(false);
   const [isAddingCredential, setIsAddingCredential] = React.useState(false);
   const [isAddingCategory, setIsAddingCategory] = React.useState(false);
+  
+  // Edit states
+  const [editingPayment, setEditingPayment] = React.useState<PaymentMethod | null>(null);
+  const [editingCredential, setEditingCredential] = React.useState<AccountCredential | null>(null);
+  const [editingCategory, setEditingCategory] = React.useState<CustomCategory | null>(null);
 
   // Payment Method Form
   const [paymentName, setPaymentName] = React.useState("");
@@ -60,27 +70,96 @@ export function SettingsClient({
   const [categoryName, setCategoryName] = React.useState("");
   const [categoryColor, setCategoryColor] = React.useState("#6366f1");
 
-  const handleAddPaymentMethod = async () => {
+  // Reset payment form
+  const resetPaymentForm = () => {
+    setPaymentName("");
+    setPaymentProvider("");
+    setPaymentNumber("");
+    setEditingPayment(null);
+  };
+
+  // Reset credential form
+  const resetCredentialForm = () => {
+    setCredName("");
+    setCredEmail("");
+    setCredPassword("");
+    setEditingCredential(null);
+  };
+
+  // Reset category form
+  const resetCategoryForm = () => {
+    setCategoryName("");
+    setCategoryColor("#6366f1");
+    setEditingCategory(null);
+  };
+
+  // Open edit payment dialog
+  const openEditPayment = (method: PaymentMethod) => {
+    setPaymentName(method.name);
+    setPaymentProvider(method.provider);
+    setPaymentNumber("");
+    setEditingPayment(method);
+    setIsAddingPayment(true);
+  };
+
+  // Open edit credential dialog
+  const openEditCredential = (cred: AccountCredential) => {
+    setCredName(cred.name);
+    setCredEmail(cred.email);
+    setCredPassword("");
+    setEditingCredential(cred);
+    setIsAddingCredential(true);
+  };
+
+  // Open edit category dialog
+  const openEditCategory = (cat: CustomCategory) => {
+    setCategoryName(cat.name);
+    setCategoryColor(cat.color || "#6366f1");
+    setEditingCategory(cat);
+    setIsAddingCategory(true);
+  };
+
+  // Handle payment method save (create or update)
+  const handleSavePaymentMethod = async () => {
     if (!paymentName || !paymentProvider) {
       toast.error("Please fill in required fields");
       return;
     }
 
-    const result = await createPaymentMethod(userId, {
-      name: paymentName,
-      provider: paymentProvider,
-      accountNumber: paymentNumber || undefined,
-    });
+    if (editingPayment) {
+      // Update
+      const result = await updatePaymentMethod(userId, editingPayment.id, {
+        name: paymentName,
+        provider: paymentProvider,
+        accountNumber: paymentNumber || undefined,
+      });
 
-    if (result.success && result.data) {
-      setPaymentMethods([...paymentMethods, result.data]);
-      setPaymentName("");
-      setPaymentProvider("");
-      setPaymentNumber("");
-      setIsAddingPayment(false);
-      toast.success("Payment method added");
+      if (result.success && result.data) {
+        setPaymentMethods(paymentMethods.map((m) => 
+          m.id === editingPayment.id ? result.data! : m
+        ));
+        resetPaymentForm();
+        setIsAddingPayment(false);
+        toast.success("Payment method updated");
+      } else {
+        toast.error(result.error || "Failed to update");
+      }
     } else {
-      toast.error(result.error || "Failed to add payment method");
+      // Create
+      const result = await createPaymentMethod(userId, {
+        name: paymentName,
+        provider: paymentProvider,
+        accountNumber: paymentNumber || undefined,
+      });
+
+      if (result.success && result.data) {
+        setPaymentMethods([...paymentMethods, result.data]);
+        resetPaymentForm();
+        setIsAddingPayment(false);
+        toast.success("Payment method added");
+      } else {
+        toast.error(result.error || "Failed to add");
+      }
     }
   };
 
@@ -94,27 +173,47 @@ export function SettingsClient({
     }
   };
 
-  const handleAddCredential = async () => {
+  // Handle credential save (create or update)
+  const handleSaveCredential = async () => {
     if (!credName || !credEmail) {
       toast.error("Please fill in required fields");
       return;
     }
 
-    const result = await createAccountCredential(userId, {
-      name: credName,
-      email: credEmail,
-      password: credPassword || undefined,
-    });
+    if (editingCredential) {
+      // Update
+      const result = await updateAccountCredential(userId, editingCredential.id, {
+        name: credName,
+        email: credEmail,
+        password: credPassword || undefined,
+      });
 
-    if (result.success && result.data) {
-      setCredentials([...credentials, result.data]);
-      setCredName("");
-      setCredEmail("");
-      setCredPassword("");
-      setIsAddingCredential(false);
-      toast.success("Account credential added");
+      if (result.success && result.data) {
+        setCredentials(credentials.map((c) => 
+          c.id === editingCredential.id ? result.data! : c
+        ));
+        resetCredentialForm();
+        setIsAddingCredential(false);
+        toast.success("Credential updated");
+      } else {
+        toast.error(result.error || "Failed to update");
+      }
     } else {
-      toast.error(result.error || "Failed to add credential");
+      // Create
+      const result = await createAccountCredential(userId, {
+        name: credName,
+        email: credEmail,
+        password: credPassword || undefined,
+      });
+
+      if (result.success && result.data) {
+        setCredentials([...credentials, result.data]);
+        resetCredentialForm();
+        setIsAddingCredential(false);
+        toast.success("Credential added");
+      } else {
+        toast.error(result.error || "Failed to add");
+      }
     }
   };
 
@@ -132,31 +231,51 @@ export function SettingsClient({
     const result = await decryptCredentialPassword(userId, id);
     if (result.success && result.data) {
       await navigator.clipboard.writeText(result.data);
-      toast.success("Password copied to clipboard");
+      toast.success("Password copied");
     } else {
-      toast.error(result.error || "Failed to copy password");
+      toast.error(result.error || "Failed to copy");
     }
   };
 
-  const handleAddCategory = async () => {
+  // Handle category save (create or update)
+  const handleSaveCategory = async () => {
     if (!categoryName) {
       toast.error("Please enter category name");
       return;
     }
 
-    const result = await createCategory(userId, {
-      name: categoryName,
-      color: categoryColor,
-    });
+    if (editingCategory) {
+      // Update
+      const result = await updateCategory(userId, editingCategory.id, {
+        name: categoryName,
+        color: categoryColor,
+      });
 
-    if (result.success && result.data) {
-      setCategories([...categories, result.data]);
-      setCategoryName("");
-      setCategoryColor("#6366f1");
-      setIsAddingCategory(false);
-      toast.success("Category added");
+      if (result.success && result.data) {
+        setCategories(categories.map((c) => 
+          c.id === editingCategory.id ? result.data! : c
+        ));
+        resetCategoryForm();
+        setIsAddingCategory(false);
+        toast.success("Category updated");
+      } else {
+        toast.error(result.error || "Failed to update");
+      }
     } else {
-      toast.error(result.error || "Failed to add category");
+      // Create
+      const result = await createCategory(userId, {
+        name: categoryName,
+        color: categoryColor,
+      });
+
+      if (result.success && result.data) {
+        setCategories([...categories, result.data]);
+        resetCategoryForm();
+        setIsAddingCategory(false);
+        toast.success("Category added");
+      } else {
+        toast.error(result.error || "Failed to add");
+      }
     }
   };
 
@@ -179,7 +298,10 @@ export function SettingsClient({
             <Tag className="h-5 w-5" />
             <h2 className="text-xl font-semibold">Categories</h2>
           </div>
-          <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+          <Dialog open={isAddingCategory} onOpenChange={(open) => {
+            setIsAddingCategory(open);
+            if (!open) resetCategoryForm();
+          }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-1" /> Add
@@ -187,9 +309,9 @@ export function SettingsClient({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Category</DialogTitle>
+                <DialogTitle>{editingCategory ? "Edit Category" : "Add Category"}</DialogTitle>
                 <DialogDescription>
-                  Create a custom category for organizing subscriptions.
+                  {editingCategory ? "Update category details." : "Create a custom category."}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
@@ -213,8 +335,8 @@ export function SettingsClient({
                     <span className="text-sm text-muted-foreground">{categoryColor}</span>
                   </div>
                 </div>
-                <Button onClick={handleAddCategory} className="w-full">
-                  Save Category
+                <Button onClick={handleSaveCategory} className="w-full">
+                  {editingCategory ? "Update Category" : "Save Category"}
                 </Button>
               </div>
             </DialogContent>
@@ -224,11 +346,8 @@ export function SettingsClient({
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-2">Default Categories:</p>
           <div className="flex flex-wrap gap-2">
-            {["Entertainment", "Tools", "Work", "Utilities"].map((cat) => (
-              <span
-                key={cat}
-                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-muted"
-              >
+            {["General", "Entertainment", "Tools", "Work", "Utilities"].map((cat) => (
+              <span key={cat} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-muted">
                 {cat}
               </span>
             ))}
@@ -241,24 +360,19 @@ export function SettingsClient({
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground mb-2">Custom Categories:</p>
             {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex items-center justify-between p-3 rounded-md bg-muted/50"
-              >
+              <div key={cat.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
                 <div className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: cat.color || "#6366f1" }}
-                  />
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cat.color || "#6366f1" }} />
                   <span className="font-medium">{cat.name}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteCategory(cat.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openEditCategory(cat)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -272,7 +386,10 @@ export function SettingsClient({
             <CreditCard className="h-5 w-5" />
             <h2 className="text-xl font-semibold">Payment Methods</h2>
           </div>
-          <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
+          <Dialog open={isAddingPayment} onOpenChange={(open) => {
+            setIsAddingPayment(open);
+            if (!open) resetPaymentForm();
+          }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-1" /> Add
@@ -280,9 +397,9 @@ export function SettingsClient({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Payment Method</DialogTitle>
+                <DialogTitle>{editingPayment ? "Edit Payment Method" : "Add Payment Method"}</DialogTitle>
                 <DialogDescription>
-                  Save a payment method for quick selection when adding subscriptions.
+                  {editingPayment ? "Update payment method details." : "Save a payment method for quick selection."}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
@@ -303,15 +420,15 @@ export function SettingsClient({
                   />
                 </div>
                 <div>
-                  <Label>Account Number (Optional)</Label>
+                  <Label>Account Number {editingPayment ? "(leave empty to keep current)" : "(Optional)"}</Label>
                   <Input
                     placeholder="Will be masked to last 4 digits"
                     value={paymentNumber}
                     onChange={(e) => setPaymentNumber(e.target.value)}
                   />
                 </div>
-                <Button onClick={handleAddPaymentMethod} className="w-full">
-                  Save Payment Method
+                <Button onClick={handleSavePaymentMethod} className="w-full">
+                  {editingPayment ? "Update Payment Method" : "Save Payment Method"}
                 </Button>
               </div>
             </DialogContent>
@@ -323,23 +440,21 @@ export function SettingsClient({
         ) : (
           <div className="space-y-2">
             {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className="flex items-center justify-between p-3 rounded-md bg-muted/50"
-              >
+              <div key={method.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
                 <div>
                   <p className="font-medium">{method.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {method.provider} {method.lastFourDigits && `• ****${method.lastFourDigits}`}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeletePaymentMethod(method.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openEditPayment(method)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeletePaymentMethod(method.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -353,7 +468,10 @@ export function SettingsClient({
             <Key className="h-5 w-5" />
             <h2 className="text-xl font-semibold">Account Credentials</h2>
           </div>
-          <Dialog open={isAddingCredential} onOpenChange={setIsAddingCredential}>
+          <Dialog open={isAddingCredential} onOpenChange={(open) => {
+            setIsAddingCredential(open);
+            if (!open) resetCredentialForm();
+          }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-1" /> Add
@@ -361,9 +479,9 @@ export function SettingsClient({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Account Credential</DialogTitle>
+                <DialogTitle>{editingCredential ? "Edit Credential" : "Add Credential"}</DialogTitle>
                 <DialogDescription>
-                  Save login credentials for quick selection when adding subscriptions.
+                  {editingCredential ? "Update credential details." : "Save login credentials for quick selection."}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
@@ -385,7 +503,7 @@ export function SettingsClient({
                   />
                 </div>
                 <div>
-                  <Label>Password (Optional)</Label>
+                  <Label>Password {editingCredential ? "(leave empty to keep current)" : "(Optional)"}</Label>
                   <Input
                     type="password"
                     placeholder="Will be encrypted"
@@ -393,8 +511,8 @@ export function SettingsClient({
                     onChange={(e) => setCredPassword(e.target.value)}
                   />
                 </div>
-                <Button onClick={handleAddCredential} className="w-full">
-                  Save Credential
+                <Button onClick={handleSaveCredential} className="w-full">
+                  {editingCredential ? "Update Credential" : "Save Credential"}
                 </Button>
               </div>
             </DialogContent>
@@ -406,29 +524,21 @@ export function SettingsClient({
         ) : (
           <div className="space-y-2">
             {credentials.map((cred) => (
-              <div
-                key={cred.id}
-                className="flex items-center justify-between p-3 rounded-md bg-muted/50"
-              >
+              <div key={cred.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
                 <div>
                   <p className="font-medium">{cred.name}</p>
                   <p className="text-sm text-muted-foreground">{cred.email}</p>
                 </div>
                 <div className="flex gap-1">
                   {cred.passwordEncrypted && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCopyPassword(cred.id)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => handleCopyPassword(cred.id)}>
                       <Copy className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteCredential(cred.id)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => openEditCredential(cred)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteCredential(cred.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

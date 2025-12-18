@@ -59,6 +59,35 @@ export async function createPaymentMethod(
   }
 }
 
+export async function updatePaymentMethod(
+  userId: string,
+  methodId: string,
+  input: { name?: string; provider?: string; accountNumber?: string }
+): Promise<ActionResult<typeof paymentMethods.$inferSelect>> {
+  try {
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    
+    if (input.name) updateData.name = input.name;
+    if (input.provider) updateData.provider = input.provider;
+    if (input.accountNumber) {
+      updateData.lastFourDigits = maskPaymentMethod(input.accountNumber);
+    }
+
+    const [method] = await db
+      .update(paymentMethods)
+      .set(updateData)
+      .where(and(eq(paymentMethods.id, methodId), eq(paymentMethods.userId, userId)))
+      .returning();
+
+    return { success: true, data: method };
+  } catch (error) {
+    console.error("Error updating payment method:", error);
+    return { success: false, error: "Failed to update payment method" };
+  }
+}
+
 export async function deletePaymentMethod(
   userId: string,
   methodId: string
@@ -121,6 +150,36 @@ export async function createAccountCredential(
   } catch (error) {
     console.error("Error creating account credential:", error);
     return { success: false, error: "Failed to create account credential" };
+  }
+}
+
+export async function updateAccountCredential(
+  userId: string,
+  credentialId: string,
+  input: { name?: string; email?: string; password?: string; loginMethod?: string }
+): Promise<ActionResult<typeof accountCredentials.$inferSelect>> {
+  try {
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    
+    if (input.name) updateData.name = input.name;
+    if (input.email) updateData.email = input.email;
+    if (input.loginMethod) updateData.loginMethod = input.loginMethod;
+    if (input.password) {
+      updateData.passwordEncrypted = encryptPassword(input.password);
+    }
+
+    const [credential] = await db
+      .update(accountCredentials)
+      .set(updateData)
+      .where(and(eq(accountCredentials.id, credentialId), eq(accountCredentials.userId, userId)))
+      .returning();
+
+    return { success: true, data: credential };
+  } catch (error) {
+    console.error("Error updating account credential:", error);
+    return { success: false, error: "Failed to update account credential" };
   }
 }
 
@@ -206,6 +265,32 @@ export async function createCategory(
   } catch (error) {
     console.error("Error creating category:", error);
     return { success: false, error: "Failed to create category" };
+  }
+}
+
+export async function updateCategory(
+  userId: string,
+  categoryId: string,
+  input: { name?: string; color?: string }
+): Promise<ActionResult<typeof customCategories.$inferSelect>> {
+  try {
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    
+    if (input.name) updateData.name = input.name;
+    if (input.color) updateData.color = input.color;
+
+    const [category] = await db
+      .update(customCategories)
+      .set(updateData)
+      .where(and(eq(customCategories.id, categoryId), eq(customCategories.userId, userId)))
+      .returning();
+
+    return { success: true, data: category };
+  } catch (error) {
+    console.error("Error updating category:", error);
+    return { success: false, error: "Failed to update category" };
   }
 }
 
