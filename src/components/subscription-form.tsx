@@ -3,16 +3,14 @@
 /**
  * Subscription Form Component
  * Create/edit form with React Hook Form and Zod validation
- * Supports master data selection for payment methods and credentials
- *
- * Requirements: 6.2, 6.3, 4.3
+ * Supports master data selection for payment methods, credentials, and categories
  */
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { Loader2, CreditCard, User } from "lucide-react";
+import { format, addDays } from "date-fns";
+import { Loader2, CreditCard, User, Link as LinkIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,17 +33,24 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   createSubscriptionSchema,
-  billingCycleValues,
-  categoryValues,
   currencyValues,
   type CreateSubscriptionInput,
   type CreateSubscriptionFormInput,
 } from "@/lib/validations";
-import { calculateNextPaymentDate } from "@/lib/date-utils";
-import type { Subscription, BillingCycle } from "@/db/schema";
-import type { PaymentMethod, AccountCredential } from "@/db/master-schema";
+import type { Subscription } from "@/db/schema";
+import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
+import { cn } from "@/lib/utils";
 
-// Login method options for conditional password field
+// Default categories
+const defaultCategories = [
+  { name: "General", color: "#6b7280" },
+  { name: "Entertainment", color: "#8b5cf6" },
+  { name: "Tools", color: "#3b82f6" },
+  { name: "Work", color: "#22c55e" },
+  { name: "Utilities", color: "#f97316" },
+];
+
+// Login method options
 const loginMethodOptions = [
   { value: "email", label: "Email/Password" },
   { value: "google", label: "Google" },
@@ -56,20 +61,14 @@ const loginMethodOptions = [
 type LoginMethod = (typeof loginMethodOptions)[number]["value"];
 
 interface SubscriptionFormProps {
-  /** Existing subscription for edit mode, undefined for create mode */
   subscription?: Subscription;
-  /** Callback when form submission succeeds */
   onSuccess: () => void;
-  /** Callback when form is cancelled */
   onCancel: () => void;
-  /** Submit handler - receives validated form data */
   onSubmit: (data: CreateSubscriptionInput) => Promise<void>;
-  /** Whether the form is currently submitting */
   isSubmitting?: boolean;
-  /** Saved payment methods from master data */
   paymentMethods?: PaymentMethod[];
-  /** Saved account credentials from master data */
   accountCredentials?: AccountCredential[];
+  categories?: CustomCategory[];
 }
 
 export function SubscriptionForm({
@@ -80,23 +79,32 @@ export function SubscriptionForm({
   isSubmitting = false,
   paymentMethods = [],
   accountCredentials = [],
+  categories = [],
 }: SubscriptionFormProps) {
   const isEditMode = !!subscription;
 
-  // Track login method for conditional password field
+  // Combine default and custom categories
+  const allCategories = [
+    ...defaultCategories,
+    ...categories.map((c) => ({ name: c.name, color: c.color || "#6366f1" })),
+  ];
+
+  // State
   const [loginMethod, setLoginMethod] = React.useState<LoginMethod>("email");
-  
-  // Track whether using saved master data or manual input (default to master data if available)
   const [usePaymentMaster, setUsePaymentMaster] = React.useState(false);
   const [useCredentialMaster, setUseCredentialMaster] = React.useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = React.useState<string>("");
   const [selectedCredentialId, setSelectedCredentialId] = React.useState<string>("");
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("General");
   
-  // Track date input mode: "date" for picking expiry date, "days" for entering duration
+  // Date input mode
   const [dateInputMode, setDateInputMode] = React.useState<"date" | "days">("date");
+  const [startDate, setStartDate] = React.useState<Date>(new Date());
+  const [endDate, setEndDate] = React.useState<Date>(addDays(new Date(), 30));
   const [durationDays, setDurationDays] = React.useState<number>(30);
+  const [startDateForDays, setStartDateForDays] = React.useState<Date>(new Date());
 
-  // Update master data mode when data is loaded (default to master data if available)
+  // Update master data mode when data is loaded
   React.useEffect(() => {
     if (paymentMethods.length > 0 && !isEditMode) {
       setUsePaymentMaster(true);
@@ -109,48 +117,49 @@ export function SubscriptionForm({
     }
   }, [accountCredentials.length, isEditMode]);
 
-  // Initialize form with default values or existing subscription data
+  // Set initial category from subscription
+  React.useEffect(() => {
+    if (subscription?.category) {
+      setSelectedCategory(subscription.category);
+    }
+  }, [subscription?.category]);
+
   const form = useForm<CreateSubscriptionFormInput>({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
       name: subscription?.name ?? "",
       price: subscription?.price ? parseFloat(subscription.price) : undefined,
       currency: (subscription?.currency as "IDR" | "USD") ?? "IDR",
-      billingCycle: subscription?.billingCycle ?? "monthly",
-      startDate: subscription?.startDate
-        ? new Date(subscription.startDate)
-        : new Date(),
+      billingCycle: "monthly", // Will be calculated from dates
+      startDate: subscription?.startDate ? new Date(subscription.startDate) : new Date(),
       reminderDays: subscription?.reminderDays ?? 3,
       paymentMethodProvider: subscription?.paymentMethodProvider ?? "",
-      paymentMethodNumber: "", // Never pre-fill - it's masked in DB
+      paymentMethodNumber: "",
       accountEmail: subscription?.accountEmail ?? "",
-      accountPassword: "", // Never pre-fill - it's encrypted in DB
+      accountPassword: "",
       notes: subscription?.notes ?? "",
       category: subscription?.category ?? undefined,
+      url: (subscription as any)?.url ?? "",
     },
   });
 
-  // Watch billing cycle and start date for next payment preview
-  const watchedBillingCycle = form.watch("billingCycle");
-  const watchedStartDate = form.watch("startDate");
-
-  // Calculate next payment date preview
-  const nextPaymentPreview = React.useMemo(() => {
-    if (!watchedStartDate || !watchedBillingCycle) return null;
-    try {
-      return calculateNextPaymentDate(
-        watchedStartDate,
-        watchedBillingCycle as BillingCycle
-      );
-    } catch {
-      return null;
-    }
-  }, [watchedStartDate, watchedBillingCycle]);
+  const watchedCurrency = form.watch("currency");
 
   // Handle form submission
   const handleSubmit = async (data: CreateSubscriptionFormInput) => {
     try {
-      // Zod will apply defaults, so we cast to the output type
+      // Set the correct start date based on mode
+      if (dateInputMode === "date") {
+        data.startDate = startDate;
+      } else {
+        data.startDate = startDateForDays;
+      }
+      
+      // Set category
+      if (selectedCategory && selectedCategory !== "General") {
+        data.category = selectedCategory as any;
+      }
+      
       await onSubmit(data as CreateSubscriptionInput);
       onSuccess();
     } catch (error) {
@@ -158,11 +167,11 @@ export function SubscriptionForm({
     }
   };
 
-  // Check if password field should be hidden (Google/GitHub login)
   const shouldHidePassword =
-    loginMethod === "google" ||
-    loginMethod === "github" ||
-    loginMethod === "other";
+    loginMethod === "google" || loginMethod === "github" || loginMethod === "other";
+
+  // Price step based on currency
+  const priceStep = watchedCurrency === "IDR" ? 1000 : 0.01;
 
   return (
     <Form {...form}>
@@ -182,6 +191,24 @@ export function SubscriptionForm({
           )}
         />
 
+        {/* URL Field (Optional) */}
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" />
+                Subscription URL (Optional)
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="https://netflix.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         {/* Price and Currency Row */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
@@ -193,9 +220,9 @@ export function SubscriptionForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step={priceStep}
                     min="0"
-                    placeholder="0.00"
+                    placeholder={watchedCurrency === "IDR" ? "50000" : "9.99"}
                     {...field}
                     value={field.value ?? ""}
                     onChange={(e) => {
@@ -215,10 +242,7 @@ export function SubscriptionForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Currency</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select currency" />
@@ -237,32 +261,6 @@ export function SubscriptionForm({
             )}
           />
         </div>
-
-        {/* Billing Cycle Field */}
-        <FormField
-          control={form.control}
-          name="billingCycle"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Billing Cycle</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select billing cycle" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {billingCycleValues.map((cycle) => (
-                    <SelectItem key={cycle} value={cycle}>
-                      {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {/* Date Input Section */}
         <div className="space-y-4 rounded-md border p-4">
@@ -289,87 +287,66 @@ export function SubscriptionForm({
           </div>
 
           {dateInputMode === "date" ? (
-            <>
-              {/* Start Date Field */}
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date (default: hari ini)</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        date={field.value}
-                        onDateChange={field.onChange}
-                        placeholder="Select start date"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Next Payment Date Preview */}
-              {nextPaymentPreview && (
-                <div className="rounded-md bg-muted/50 p-3">
-                  <p className="text-sm text-muted-foreground">
-                    Next payment date:{" "}
-                    <span className="font-medium text-foreground">
-                      {format(nextPaymentPreview, "PPP")}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium">Start Date</label>
+                <DatePicker
+                  date={startDate}
+                  onDateChange={(d) => d && setStartDate(d)}
+                  placeholder="Pilih tanggal mulai"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Default: hari ini</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">End Date (Expired)</label>
+                <DatePicker
+                  date={endDate}
+                  onDateChange={(d) => d && setEndDate(d)}
+                  placeholder="Pilih tanggal berakhir"
+                />
+              </div>
+              <div className="rounded-md bg-muted/50 p-3">
+                <p className="text-sm text-muted-foreground">
+                  Durasi: <span className="font-medium text-foreground">
+                    {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} hari
+                  </span>
+                </p>
+              </div>
+            </div>
           ) : (
-            <>
-              {/* Duration in Days */}
-              <div className="space-y-2">
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium">Start Date</label>
+                <DatePicker
+                  date={startDateForDays}
+                  onDateChange={(d) => d && setStartDateForDays(d)}
+                  placeholder="Pilih tanggal mulai"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Default: hari ini</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium">Durasi Langganan (hari)</label>
                 <Input
                   type="number"
                   min="1"
                   max="365"
                   value={durationDays}
-                  onChange={(e) => {
-                    const days = parseInt(e.target.value) || 1;
-                    setDurationDays(days);
-                    // Calculate expiry date from today
-                    const today = new Date();
-                    const expiryDate = new Date(today);
-                    expiryDate.setDate(today.getDate() + days);
-                    form.setValue("startDate", today);
-                  }}
+                  onChange={(e) => setDurationDays(parseInt(e.target.value) || 1)}
                   placeholder="e.g., 30"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Masukkan jumlah hari langganan (misal: 28, 30, 365)
-                </p>
               </div>
-
-              {/* Calculated Dates Preview */}
-              <div className="rounded-md bg-muted/50 p-3 space-y-1">
+              <div className="rounded-md bg-muted/50 p-3">
                 <p className="text-sm text-muted-foreground">
-                  Start date:{" "}
-                  <span className="font-medium text-foreground">
-                    {format(new Date(), "PPP")} (hari ini)
-                  </span>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Expired date:{" "}
-                  <span className="font-medium text-foreground">
-                    {format(
-                      new Date(new Date().setDate(new Date().getDate() + durationDays)),
-                      "PPP"
-                    )}
+                  End date: <span className="font-medium text-foreground">
+                    {format(addDays(startDateForDays, durationDays), "PPP")}
                   </span>
                 </p>
               </div>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Reminder Days Field */}
+        {/* Reminder Days */}
         <FormField
           control={form.control}
           name="reminderDays"
@@ -383,44 +360,40 @@ export function SubscriptionForm({
                   max="30"
                   {...field}
                   value={field.value ?? 3}
-                  onChange={(e) =>
-                    field.onChange(parseInt(e.target.value) || 0)
-                  }
+                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                 />
               </FormControl>
-              <FormDescription>
-                Days before payment to highlight subscription
-              </FormDescription>
+              <FormDescription>Days before payment to highlight</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Category Field */}
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {categoryValues.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Category Grid */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Category</label>
+          <div className="grid grid-cols-3 gap-2">
+            {allCategories.map((cat) => (
+              <button
+                key={cat.name}
+                type="button"
+                onClick={() => setSelectedCategory(cat.name)}
+                className={cn(
+                  "flex items-center gap-2 p-2 rounded-md border text-sm transition-all",
+                  selectedCategory === cat.name
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-muted hover:border-primary/50"
+                )}
+              >
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: cat.color }}
+                />
+                <span className="truncate">{cat.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Payment Method Section */}
         <div className="space-y-4 rounded-md border p-4">
@@ -437,7 +410,6 @@ export function SubscriptionForm({
                 onClick={() => {
                   setUsePaymentMaster(!usePaymentMaster);
                   if (usePaymentMaster) {
-                    // Switching to manual - clear fields
                     form.setValue("paymentMethodProvider", "");
                     form.setValue("paymentMethodNumber", "");
                   }
@@ -451,7 +423,6 @@ export function SubscriptionForm({
 
           {usePaymentMaster && paymentMethods.length > 0 ? (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Pilih Payment Method</label>
               <Select
                 value={selectedPaymentId}
                 onValueChange={(value) => {
@@ -459,12 +430,11 @@ export function SubscriptionForm({
                   const selected = paymentMethods.find((p) => p.id === value);
                   if (selected) {
                     form.setValue("paymentMethodProvider", selected.provider);
-                    form.setValue("paymentMethodNumber", "");
                   }
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih payment method tersimpan" />
+                  <SelectValue placeholder="Pilih payment method" />
                 </SelectTrigger>
                 <SelectContent>
                   {paymentMethods.map((method) => (
@@ -475,11 +445,6 @@ export function SubscriptionForm({
                   ))}
                 </SelectContent>
               </Select>
-              {selectedPaymentId && (
-                <p className="text-xs text-muted-foreground">
-                  Provider akan diisi otomatis dari data tersimpan
-                </p>
-              )}
             </div>
           ) : (
             <>
@@ -490,13 +455,12 @@ export function SubscriptionForm({
                   <FormItem>
                     <FormLabel>Provider</FormLabel>
                     <FormControl>
-                      <Input placeholder="GoPay, BCA, Jenius, etc." {...field} />
+                      <Input placeholder="GoPay, BCA, etc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="paymentMethodNumber"
@@ -504,14 +468,8 @@ export function SubscriptionForm({
                   <FormItem>
                     <FormLabel>Card/Account Number</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter full number (will be masked)"
-                        {...field}
-                      />
+                      <Input placeholder="Will be masked" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Only last 4 digits will be stored
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -535,7 +493,6 @@ export function SubscriptionForm({
                 onClick={() => {
                   setUseCredentialMaster(!useCredentialMaster);
                   if (useCredentialMaster) {
-                    // Switching to manual - clear fields
                     form.setValue("accountEmail", "");
                     form.setValue("accountPassword", "");
                   }
@@ -548,40 +505,30 @@ export function SubscriptionForm({
           </div>
 
           {useCredentialMaster && accountCredentials.length > 0 ? (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Pilih Account Credential</label>
-              <Select
-                value={selectedCredentialId}
-                onValueChange={(value) => {
-                  setSelectedCredentialId(value);
-                  const selected = accountCredentials.find((c) => c.id === value);
-                  if (selected) {
-                    form.setValue("accountEmail", selected.email);
-                    form.setValue("accountPassword", "");
-                    setLoginMethod((selected.loginMethod as LoginMethod) || "email");
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih credential tersimpan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accountCredentials.map((cred) => (
-                    <SelectItem key={cred.id} value={cred.id}>
-                      {cred.name} - {cred.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedCredentialId && (
-                <p className="text-xs text-muted-foreground">
-                  Email akan diisi otomatis. Password tersimpan akan digunakan.
-                </p>
-              )}
-            </div>
+            <Select
+              value={selectedCredentialId}
+              onValueChange={(value) => {
+                setSelectedCredentialId(value);
+                const selected = accountCredentials.find((c) => c.id === value);
+                if (selected) {
+                  form.setValue("accountEmail", selected.email);
+                  setLoginMethod((selected.loginMethod as LoginMethod) || "email");
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih credential" />
+              </SelectTrigger>
+              <SelectContent>
+                {accountCredentials.map((cred) => (
+                  <SelectItem key={cred.id} value={cred.id}>
+                    {cred.name} - {cred.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : (
             <>
-              {/* Login Method Selector */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Login Method</label>
                 <Select
@@ -589,76 +536,50 @@ export function SubscriptionForm({
                   onValueChange={(value) => setLoginMethod(value as LoginMethod)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select login method" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {loginMethodOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                    {loginMethodOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <FormField
                 control={form.control}
                 name="accountEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Account Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="account@example.com"
-                        {...field}
-                      />
+                      <Input type="email" placeholder="account@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* Conditional Password Field - Hidden for Google/GitHub login */}
               {!shouldHidePassword && (
                 <FormField
                   control={form.control}
                   name="accountPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Account Password</FormLabel>
+                      <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Enter password (will be encrypted)"
-                          {...field}
-                        />
+                        <Input type="password" placeholder="Will be encrypted" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Stored securely with AES encryption
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
-
-              {shouldHidePassword && (
-                <p className="text-sm text-muted-foreground">
-                  Password field hidden for{" "}
-                  {loginMethod === "google"
-                    ? "Google"
-                    : loginMethod === "github"
-                      ? "GitHub"
-                      : "OAuth"}{" "}
-                  login
-                </p>
-              )}
             </>
           )}
         </div>
 
-        {/* Notes Field */}
+        {/* Notes */}
         <FormField
           control={form.control}
           name="notes"
@@ -666,22 +587,16 @@ export function SubscriptionForm({
             <FormItem>
               <FormLabel>Notes (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Any additional notes..." {...field} />
+                <Input placeholder="Any notes..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Form Actions */}
+        {/* Actions */}
         <div className="flex gap-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="flex-1"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="flex-1">
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting} className="flex-1">
@@ -691,7 +606,7 @@ export function SubscriptionForm({
                 {isEditMode ? "Updating..." : "Creating..."}
               </>
             ) : isEditMode ? (
-              "Update Subscription"
+              "Update"
             ) : (
               "Add Subscription"
             )}

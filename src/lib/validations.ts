@@ -31,6 +31,7 @@ export const createSubscriptionSchema = z.object({
     .string()
     .min(1, "Name is required")
     .max(100, "Name must be 100 characters or less"),
+  url: z.string().url("Invalid URL format").optional().or(z.literal("")),
   price: z.number().positive("Price must be positive"),
   currency: z.enum(currencyValues, {
     message: "Currency must be IDR or USD",
@@ -56,11 +57,7 @@ export const createSubscriptionSchema = z.object({
     .or(z.literal("")),
   accountPassword: z.string().optional(),
   notes: z.string().max(500, "Notes must be 500 characters or less").optional(),
-  category: z
-    .enum(categoryValues, {
-      message: "Category must be Entertainment, Tools, Work, or Utilities",
-    })
-    .optional(),
+  category: z.string().optional(),
 });
 
 /**

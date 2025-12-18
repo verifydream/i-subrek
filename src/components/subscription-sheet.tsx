@@ -25,10 +25,10 @@ import {
   useCreateSubscription,
   useUpdateSubscription,
 } from "@/hooks/use-subscriptions";
-import { getPaymentMethods, getAccountCredentials } from "@/actions/master-data";
+import { getPaymentMethods, getAccountCredentials, getCategories } from "@/actions/master-data";
 import type { CreateSubscriptionInput } from "@/lib/validations";
 import type { Subscription } from "@/db/schema";
-import type { PaymentMethod, AccountCredential } from "@/db/master-schema";
+import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
 
 interface SubscriptionSheetProps {
   subscription?: Subscription;
@@ -50,6 +50,7 @@ export function SubscriptionSheet({
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethod[]>([]);
   const [accountCredentials, setAccountCredentials] = React.useState<AccountCredential[]>([]);
+  const [categories, setCategories] = React.useState<CustomCategory[]>([]);
 
   const createMutation = useCreateSubscription(userId);
   const updateMutation = useUpdateSubscription(userId);
@@ -69,9 +70,11 @@ export function SubscriptionSheet({
       Promise.all([
         getPaymentMethods(userId),
         getAccountCredentials(userId),
-      ]).then(([methods, credentials]) => {
+        getCategories(userId),
+      ]).then(([methods, credentials, cats]) => {
         setPaymentMethods(methods);
         setAccountCredentials(credentials);
+        setCategories(cats);
       });
     }
   }, [open, userId]);
@@ -126,6 +129,7 @@ export function SubscriptionSheet({
             isSubmitting={isSubmitting}
             paymentMethods={paymentMethods}
             accountCredentials={accountCredentials}
+            categories={categories}
           />
         </div>
       </DialogContent>
