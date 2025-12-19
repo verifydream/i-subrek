@@ -61,8 +61,8 @@ export async function createSubscription(
 
     const data = validationResult.data;
 
-    // Calculate next payment date
-    const nextPaymentDate = calculateNextPaymentDate(
+    // Use provided nextPaymentDate or calculate from billing cycle
+    const nextPaymentDate = data.nextPaymentDate || calculateNextPaymentDate(
       data.startDate,
       data.billingCycle
     );
@@ -183,22 +183,20 @@ export async function updateSubscription(
     if (data.url !== undefined) updateData.url = data.url || null;
     if (data.status !== undefined) updateData.status = data.status;
 
-    // Handle start date and billing cycle changes - recalculate next payment date
+    // Handle start date and next payment date
     if (data.startDate !== undefined) {
       updateData.startDate = data.startDate.toISOString().split("T")[0];
+    }
+    
+    // Use provided nextPaymentDate directly (from user selection)
+    if (data.nextPaymentDate !== undefined) {
+      updateData.nextPaymentDate = data.nextPaymentDate.toISOString().split("T")[0];
+    } else if (data.startDate !== undefined && !data.nextPaymentDate) {
+      // Fallback: calculate from billing cycle if no nextPaymentDate provided
       const billingCycle = data.billingCycle || existing[0].billingCycle;
       updateData.nextPaymentDate = calculateNextPaymentDate(
         data.startDate,
         billingCycle
-      )
-        .toISOString()
-        .split("T")[0];
-    } else if (data.billingCycle !== undefined) {
-      // Billing cycle changed but not start date - recalculate from existing start date
-      const startDate = new Date(existing[0].startDate);
-      updateData.nextPaymentDate = calculateNextPaymentDate(
-        startDate,
-        data.billingCycle
       )
         .toISOString()
         .split("T")[0];

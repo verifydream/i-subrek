@@ -42,6 +42,9 @@ export const createSubscriptionSchema = z.object({
   startDate: z.date({
     message: "Start date must be a valid date",
   }),
+  nextPaymentDate: z.date({
+    message: "Next payment date must be a valid date",
+  }).optional(),
   reminderDays: z
     .number()
     .int("Reminder days must be a whole number")

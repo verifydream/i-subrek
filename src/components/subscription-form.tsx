@@ -164,11 +164,15 @@ export function SubscriptionForm({
   // Handle form submission
   const handleSubmit = async (data: CreateSubscriptionFormInput) => {
     try {
-      // Set the correct start date based on mode
+      // Set the correct start date and end date based on mode
       if (dateInputMode === "date") {
         data.startDate = startDate;
+        // Use the selected end date directly as nextPaymentDate
+        (data as any).nextPaymentDate = endDate;
       } else {
         data.startDate = startDateForDays;
+        // Calculate end date from duration days
+        (data as any).nextPaymentDate = addDays(startDateForDays, durationDays);
       }
       
       // Set category
@@ -536,10 +540,25 @@ export function SubscriptionForm({
                 <SelectValue placeholder="Pilih credential" />
               </SelectTrigger>
               <SelectContent>
-                {accountCredentials.map((cred) => (
-                  <SelectItem key={cred.id} value={cred.id}>
-                    {cred.name} - {cred.email}
-                  </SelectItem>
+                {/* Group credentials by email */}
+                {Object.entries(
+                  accountCredentials.reduce((groups, cred) => {
+                    const email = cred.email || "No Email";
+                    if (!groups[email]) groups[email] = [];
+                    groups[email].push(cred);
+                    return groups;
+                  }, {} as Record<string, typeof accountCredentials>)
+                ).map(([email, creds]) => (
+                  <div key={email}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                      {email}
+                    </div>
+                    {creds.map((cred) => (
+                      <SelectItem key={cred.id} value={cred.id}>
+                        {cred.name} ({cred.loginMethod || "email"})
+                      </SelectItem>
+                    ))}
+                  </div>
                 ))}
               </SelectContent>
             </Select>

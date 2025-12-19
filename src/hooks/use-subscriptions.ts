@@ -162,9 +162,19 @@ export function useUpdateSubscription(userId: string) {
             sub.id === subscriptionId
               ? {
                   ...sub,
-                  ...input,
+                  name: input.name ?? sub.name,
                   price: input.price?.toString() ?? sub.price,
+                  currency: input.currency ?? sub.currency,
+                  billingCycle: input.billingCycle ?? sub.billingCycle,
                   startDate: input.startDate?.toISOString().split("T")[0] ?? sub.startDate,
+                  nextPaymentDate: input.nextPaymentDate?.toISOString().split("T")[0] ?? sub.nextPaymentDate,
+                  reminderDays: input.reminderDays ?? sub.reminderDays,
+                  paymentMethodProvider: input.paymentMethodProvider ?? sub.paymentMethodProvider,
+                  accountEmail: input.accountEmail ?? sub.accountEmail,
+                  notes: input.notes ?? sub.notes,
+                  category: input.category ?? sub.category,
+                  url: input.url ?? sub.url,
+                  status: input.status ?? sub.status,
                   updatedAt: new Date(),
                 }
               : sub
