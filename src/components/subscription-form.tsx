@@ -10,7 +10,19 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays } from "date-fns";
-import { Loader2, CreditCard, User, Link as LinkIcon } from "lucide-react";
+import { 
+  Loader2, 
+  CreditCard, 
+  User, 
+  Link as LinkIcon,
+  Mail,
+  Chrome,
+  Github,
+  KeyRound,
+  Wallet,
+  Building2,
+  Smartphone
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,7 +147,7 @@ export function SubscriptionForm({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
       name: subscription?.name ?? "",
-      price: subscription?.price ? parseFloat(subscription.price) : 100, // Default 100 for IDR
+      price: subscription?.price ? parseFloat(subscription.price) : 1000, // Default 1000 for IDR
       currency: (subscription?.currency as "IDR" | "USD") ?? "IDR",
       billingCycle: "monthly", // Will be calculated from dates
       startDate: subscription?.startDate ? new Date(subscription.startDate) : new Date(),
@@ -156,8 +168,8 @@ export function SubscriptionForm({
   React.useEffect(() => {
     const currentPrice = form.getValues("price");
     // Only set default if price is empty or is the default value
-    if (!currentPrice || currentPrice === 100 || currentPrice === 1) {
-      form.setValue("price", watchedCurrency === "IDR" ? 100 : 1);
+    if (!currentPrice || currentPrice === 1000 || currentPrice === 1) {
+      form.setValue("price", watchedCurrency === "IDR" ? 1000 : 1);
     }
   }, [watchedCurrency, form]);
 
@@ -416,10 +428,12 @@ export function SubscriptionForm({
         </div>
 
         {/* Payment Method Section */}
-        <div className="space-y-4 rounded-md border p-4">
+        <div className="space-y-4 rounded-lg border p-4 bg-gradient-to-br from-blue-500/5 to-transparent">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+              <div className="p-1.5 rounded-md bg-blue-500/10">
+                <Wallet className="h-4 w-4 text-blue-500" />
+              </div>
               Payment Method (Optional)
             </h3>
             {paymentMethods.length > 0 && (
@@ -442,29 +456,67 @@ export function SubscriptionForm({
           </div>
 
           {usePaymentMaster && paymentMethods.length > 0 ? (
-            <div className="space-y-2">
-              <Select
-                value={selectedPaymentId}
-                onValueChange={(value) => {
-                  setSelectedPaymentId(value);
-                  const selected = paymentMethods.find((p) => p.id === value);
-                  if (selected) {
-                    form.setValue("paymentMethodProvider", selected.provider);
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {method.name} - {method.provider}
-                      {method.lastFourDigits && ` (****${method.lastFourDigits})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              {/* Group payment methods by name (GoPay, BCA, etc) */}
+              {Object.entries(
+                paymentMethods.reduce((groups, method) => {
+                  const name = method.name || "Other";
+                  if (!groups[name]) groups[name] = [];
+                  groups[name].push(method);
+                  return groups;
+                }, {} as Record<string, typeof paymentMethods>)
+              ).map(([name, methods]) => (
+                <div key={name} className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                    {name.toLowerCase().includes("gopay") || name.toLowerCase().includes("ovo") || name.toLowerCase().includes("dana") || name.toLowerCase().includes("shopeepay") ? (
+                      <Smartphone className="h-3.5 w-3.5" />
+                    ) : name.toLowerCase().includes("bca") || name.toLowerCase().includes("bni") || name.toLowerCase().includes("mandiri") || name.toLowerCase().includes("bri") || name.toLowerCase().includes("bank") ? (
+                      <Building2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <CreditCard className="h-3.5 w-3.5" />
+                    )}
+                    {name}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {methods.map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPaymentId(method.id);
+                          form.setValue("paymentMethodProvider", method.provider);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 p-2.5 rounded-lg border text-left text-sm transition-all",
+                          selectedPaymentId === method.id
+                            ? "border-blue-500 bg-blue-100 dark:bg-blue-900/30 ring-1 ring-blue-500"
+                            : "border-muted hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                        )}
+                      >
+                        {name.toLowerCase().includes("gopay") || name.toLowerCase().includes("ovo") || name.toLowerCase().includes("dana") || name.toLowerCase().includes("shopeepay") ? (
+                          <Smartphone className="h-4 w-4 text-blue-500 shrink-0" />
+                        ) : name.toLowerCase().includes("bca") || name.toLowerCase().includes("bni") || name.toLowerCase().includes("mandiri") || name.toLowerCase().includes("bri") || name.toLowerCase().includes("bank") ? (
+                          <Building2 className="h-4 w-4 text-blue-500 shrink-0" />
+                        ) : (
+                          <CreditCard className="h-4 w-4 text-blue-500 shrink-0" />
+                        )}
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate text-xs font-medium">{method.provider}</span>
+                          {method.lastFourDigits && (
+                            <span className="text-[10px] text-muted-foreground font-mono">****{method.lastFourDigits}</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {selectedPaymentId && (
+                <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/30 rounded-md p-2 flex items-center gap-2">
+                  <CreditCard className="h-3 w-3" />
+                  Selected: {paymentMethods.find(p => p.id === selectedPaymentId)?.name} - {paymentMethods.find(p => p.id === selectedPaymentId)?.provider}
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -499,10 +551,12 @@ export function SubscriptionForm({
         </div>
 
         {/* Account Credentials Section */}
-        <div className="space-y-4 rounded-md border p-4">
+        <div className="space-y-4 rounded-lg border p-4 bg-gradient-to-br from-violet-500/5 to-transparent">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <div className="p-1.5 rounded-md bg-violet-500/10">
+                <KeyRound className="h-4 w-4 text-violet-500" />
+              </div>
               Account Credentials (Optional)
             </h3>
             {accountCredentials.length > 0 && (
@@ -525,43 +579,68 @@ export function SubscriptionForm({
           </div>
 
           {useCredentialMaster && accountCredentials.length > 0 ? (
-            <Select
-              value={selectedCredentialId}
-              onValueChange={(value) => {
-                setSelectedCredentialId(value);
-                const selected = accountCredentials.find((c) => c.id === value);
-                if (selected) {
-                  form.setValue("accountEmail", selected.email);
-                  setLoginMethod((selected.loginMethod as LoginMethod) || "email");
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih credential" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Group credentials by email */}
-                {Object.entries(
-                  accountCredentials.reduce((groups, cred) => {
-                    const email = cred.email || "No Email";
-                    if (!groups[email]) groups[email] = [];
-                    groups[email].push(cred);
-                    return groups;
-                  }, {} as Record<string, typeof accountCredentials>)
-                ).map(([email, creds]) => (
-                  <div key={email}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
-                      {email}
-                    </div>
+            <div className="space-y-3">
+              {/* Group credentials by name (Google, Email, etc) */}
+              {Object.entries(
+                accountCredentials.reduce((groups, cred) => {
+                  const name = cred.name || "Other";
+                  if (!groups[name]) groups[name] = [];
+                  groups[name].push(cred);
+                  return groups;
+                }, {} as Record<string, typeof accountCredentials>)
+              ).map(([name, creds]) => (
+                <div key={name} className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-violet-600 dark:text-violet-400">
+                    {name.toLowerCase().includes("google") ? (
+                      <Chrome className="h-3.5 w-3.5" />
+                    ) : name.toLowerCase().includes("github") ? (
+                      <Github className="h-3.5 w-3.5" />
+                    ) : name.toLowerCase().includes("email") ? (
+                      <Mail className="h-3.5 w-3.5" />
+                    ) : (
+                      <KeyRound className="h-3.5 w-3.5" />
+                    )}
+                    {name}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
                     {creds.map((cred) => (
-                      <SelectItem key={cred.id} value={cred.id}>
-                        {cred.name} ({cred.loginMethod || "email"})
-                      </SelectItem>
+                      <button
+                        key={cred.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCredentialId(cred.id);
+                          form.setValue("accountEmail", cred.email);
+                          setLoginMethod((cred.loginMethod as LoginMethod) || "email");
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 p-2.5 rounded-lg border text-left text-sm transition-all",
+                          selectedCredentialId === cred.id
+                            ? "border-violet-500 bg-violet-100 dark:bg-violet-900/30 ring-1 ring-violet-500"
+                            : "border-muted hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/20"
+                        )}
+                      >
+                        {name.toLowerCase().includes("google") ? (
+                          <Chrome className="h-4 w-4 text-violet-500 shrink-0" />
+                        ) : name.toLowerCase().includes("github") ? (
+                          <Github className="h-4 w-4 text-violet-500 shrink-0" />
+                        ) : name.toLowerCase().includes("email") ? (
+                          <Mail className="h-4 w-4 text-violet-500 shrink-0" />
+                        ) : (
+                          <User className="h-4 w-4 text-violet-500 shrink-0" />
+                        )}
+                        <span className="truncate text-xs">{cred.email}</span>
+                      </button>
                     ))}
                   </div>
-                ))}
-              </SelectContent>
-            </Select>
+                </div>
+              ))}
+              {selectedCredentialId && (
+                <div className="text-xs text-muted-foreground bg-violet-50 dark:bg-violet-950/30 rounded-md p-2 flex items-center gap-2">
+                  <User className="h-3 w-3" />
+                  Selected: {accountCredentials.find(c => c.id === selectedCredentialId)?.email}
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <div className="space-y-2">

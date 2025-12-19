@@ -7,7 +7,7 @@
  * Requirements: 5.1, 5.2, 5.3
  */
 
-import { AlertTriangle, CreditCard, TrendingUp } from "lucide-react";
+import { AlertTriangle, CreditCard, TrendingUp, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Subscription } from "@/db/schema";
@@ -42,36 +42,39 @@ export function SummaryCards({
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {/* Total Monthly Spending Card */}
-      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Spending</CardTitle>
-          <div className="p-2 rounded-lg bg-primary/10">
-            <CreditCard className="h-4 w-4 text-primary" />
+      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-tr-full" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+          <CardTitle className="text-sm font-medium text-white/80">Monthly Spending</CardTitle>
+          <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+            <CreditCard className="h-5 w-5 text-white" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           <div className="text-3xl font-bold tracking-tight">
             {formatCurrency(totalMonthlySpending, currency)}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-sm text-white/70 mt-1 flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
             Estimated monthly total
           </p>
         </CardContent>
       </Card>
 
       {/* Active Subscriptions Card */}
-      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/10 to-transparent rounded-bl-full" />
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-          <div className="p-2 rounded-lg bg-green-500/10">
-            <TrendingUp className="h-4 w-4 text-green-500" />
+      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-tr-full" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+          <CardTitle className="text-sm font-medium text-white/80">Active Subscriptions</CardTitle>
+          <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+            <TrendingUp className="h-5 w-5 text-white" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           <div className="text-3xl font-bold tracking-tight">{activeCount}</div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-sm text-white/70 mt-1">
             Currently active
           </p>
         </CardContent>
@@ -80,40 +83,28 @@ export function SummaryCards({
       {/* Trials Ending Soon Card */}
       <Card
         className={cn(
-          "relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 sm:col-span-2 lg:col-span-1",
-          hasTrialsEndingSoon && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
+          "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 sm:col-span-2 lg:col-span-1 border-0",
+          hasTrialsEndingSoon 
+            ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white" 
+            : "bg-gradient-to-br from-slate-500 to-slate-600 text-white"
         )}
       >
-        <div className={cn(
-          "absolute top-0 right-0 w-24 h-24 rounded-bl-full",
-          hasTrialsEndingSoon 
-            ? "bg-gradient-to-br from-amber-500/20 to-transparent" 
-            : "bg-gradient-to-br from-muted/50 to-transparent"
-        )} />
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Trials Ending Soon</CardTitle>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-tr-full" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+          <CardTitle className="text-sm font-medium text-white/80">Trials Ending Soon</CardTitle>
           <div className={cn(
-            "p-2 rounded-lg",
-            hasTrialsEndingSoon ? "bg-amber-500/10" : "bg-muted"
+            "p-2.5 rounded-xl backdrop-blur-sm",
+            hasTrialsEndingSoon ? "bg-white/20" : "bg-white/10"
           )}>
-            <AlertTriangle
-              className={cn(
-                "h-4 w-4",
-                hasTrialsEndingSoon
-                  ? "text-amber-500"
-                  : "text-muted-foreground"
-              )}
-            />
+            <AlertTriangle className="h-5 w-5 text-white" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className={cn(
-            "text-3xl font-bold tracking-tight",
-            hasTrialsEndingSoon && "text-amber-600 dark:text-amber-400"
-          )}>
+        <CardContent className="relative">
+          <div className="text-3xl font-bold tracking-tight">
             {trialsEndingSoon.length}
           </div>
-          <p className="text-xs text-muted-foreground mt-1 truncate">
+          <p className="text-sm text-white/70 mt-1 truncate">
             {hasTrialsEndingSoon
               ? trialsEndingSoon.map((t) => t.name).join(", ")
               : "No trials ending soon"}
