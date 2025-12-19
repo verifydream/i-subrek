@@ -1,0 +1,19 @@
+PWA Icons Placeholder
+
+Kamu perlu membuat icon dengan ukuran berikut:
+- icon-72x72.png
+- icon-96x96.png
+- icon-128x128.png
+- icon-144x144.png
+- icon-152x152.png
+- icon-192x192.png
+- icon-384x384.png
+- icon-512x512.png
+- add-icon.png (96x96, untuk shortcut)
+
+Tips:
+1. Gunakan tool seperti https://realfavicongenerator.net/ atau https://www.pwabuilder.com/imageGenerator
+2. Upload logo iSubrek dan generate semua ukuran
+3. Pastikan icon memiliki padding untuk maskable icon (safe zone 80%)
+
+Untuk sementara, kamu bisa menggunakan icon sederhana atau generate dari text.

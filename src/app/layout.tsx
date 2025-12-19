@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { PWAInstall } from "@/components/pwa-install";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +20,32 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "iSubrek - Subscription Tracker",
   description: "Track your subscriptions, trials, and recurring payments",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "iSubrek",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "iSubrek",
+    title: "iSubrek - Subscription Tracker",
+    description: "Track your subscriptions, trials, and recurring payments",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 // Script to handle initial theme to prevent flash
@@ -42,14 +70,19 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="mobile-web-app-capable" content="yes" />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <ServiceWorkerRegister />
           <Providers>
             {children}
           </Providers>
           <Toaster />
+          <PWAInstall />
         </body>
       </html>
     </ClerkProvider>
