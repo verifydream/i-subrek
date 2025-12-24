@@ -58,6 +58,7 @@ export const createSubscriptionSchema = z.object({
     .email("Invalid email format")
     .optional()
     .or(z.literal("")),
+  accountLoginMethod: z.string().optional(),
   accountPassword: z.string().optional(),
   notes: z.string().max(500, "Notes must be 500 characters or less").optional(),
   category: z.string().optional(),

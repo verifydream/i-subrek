@@ -7,7 +7,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar, CreditCard, Mail, FileText, Edit, Trash2, Link as LinkIcon } from "lucide-react";
+import { Calendar, CreditCard, Mail, FileText, Edit, Trash2, Link as LinkIcon, Chrome, Github, KeyRound } from "lucide-react";
 
 import {
   Dialog,
@@ -182,17 +182,17 @@ export function SubscriptionDetailDialog({
                 </div>
                 Payment Method
               </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-3 text-sm">
                 {subscription.paymentMethodProvider && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Provider</p>
-                    <p className="font-semibold">{subscription.paymentMethodProvider}</p>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <span className="text-muted-foreground">Provider</span>
+                    <span className="font-semibold">{subscription.paymentMethodProvider}</span>
                   </div>
                 )}
                 {subscription.paymentMethodNumber && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Card Number</p>
-                    <p className="font-mono font-semibold">{subscription.paymentMethodNumber}</p>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <span className="text-muted-foreground">Account/Card</span>
+                    <span className="font-mono font-semibold text-primary">{subscription.paymentMethodNumber}</span>
                   </div>
                 )}
               </div>
@@ -208,13 +208,30 @@ export function SubscriptionDetailDialog({
                 </div>
                 Account Details
               </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Email</p>
-                  <p className="font-semibold break-all">{subscription.accountEmail}</p>
+              <div className="space-y-3 text-sm">
+                {(subscription as any).accountLoginMethod && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <span className="text-muted-foreground">Login Method</span>
+                    <span className="font-semibold flex items-center gap-2">
+                      {(subscription as any).accountLoginMethod.toLowerCase().includes("google") ? (
+                        <Chrome className="h-4 w-4 text-blue-500" />
+                      ) : (subscription as any).accountLoginMethod.toLowerCase().includes("github") ? (
+                        <Github className="h-4 w-4" />
+                      ) : (subscription as any).accountLoginMethod.toLowerCase().includes("email") ? (
+                        <Mail className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <KeyRound className="h-4 w-4 text-violet-500" />
+                      )}
+                      {(subscription as any).accountLoginMethod}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <span className="text-muted-foreground">Email</span>
+                  <span className="font-semibold break-all text-right max-w-[200px]">{subscription.accountEmail}</span>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Password</p>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <span className="text-muted-foreground">Password</span>
                   <PasswordCopyButton
                     subscriptionId={subscription.id}
                     hasPassword={!!subscription.accountPasswordEncrypted}

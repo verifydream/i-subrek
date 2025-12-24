@@ -8,6 +8,13 @@
       "when": 1765952748553,
       "tag": "0000_left_songbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766540110341,
+      "tag": "0001_public_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

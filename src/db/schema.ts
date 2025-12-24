@@ -33,6 +33,7 @@ export const subscriptions = pgTable("subscriptions", {
   paymentMethodProvider: text("payment_method_provider"),
   paymentMethodNumber: text("payment_method_number"), // Masked: "**** 1234"
   accountEmail: text("account_email"),
+  accountLoginMethod: text("account_login_method"), // google, email, github, other
   accountPasswordEncrypted: text("account_password_encrypted"),
   notes: text("notes"),
   category: text("category"), // Changed from enum to text for custom categories

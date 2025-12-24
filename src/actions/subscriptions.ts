@@ -92,6 +92,7 @@ export async function createSubscription(
         paymentMethodProvider: data.paymentMethodProvider || null,
         paymentMethodNumber: maskedPaymentNumber,
         accountEmail: data.accountEmail || null,
+        accountLoginMethod: data.accountLoginMethod || null,
         accountPasswordEncrypted: encryptedPassword,
         notes: data.notes || null,
         category: data.category || null,
@@ -178,6 +179,8 @@ export async function updateSubscription(
       updateData.paymentMethodProvider = data.paymentMethodProvider || null;
     if (data.accountEmail !== undefined)
       updateData.accountEmail = data.accountEmail || null;
+    if (data.accountLoginMethod !== undefined)
+      updateData.accountLoginMethod = data.accountLoginMethod || null;
     if (data.notes !== undefined) updateData.notes = data.notes || null;
     if (data.category !== undefined) updateData.category = data.category || null;
     if (data.url !== undefined) updateData.url = data.url || null;

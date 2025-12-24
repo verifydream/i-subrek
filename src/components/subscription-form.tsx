@@ -126,6 +126,25 @@ export function SubscriptionForm({
       if (subscription.category) {
         setSelectedCategory(subscription.category);
       }
+      // Set login method from subscription
+      if ((subscription as any).accountLoginMethod) {
+        // Check if it matches a credential name
+        const matchingCred = accountCredentials.find(
+          c => c.name.toLowerCase() === (subscription as any).accountLoginMethod?.toLowerCase() &&
+               c.email === subscription.accountEmail
+        );
+        if (matchingCred) {
+          setUseCredentialMaster(true);
+          setSelectedCredentialId(matchingCred.id);
+        } else {
+          // Set manual login method
+          const method = (subscription as any).accountLoginMethod?.toLowerCase();
+          if (method?.includes("google")) setLoginMethod("google");
+          else if (method?.includes("github")) setLoginMethod("github");
+          else if (method?.includes("email")) setLoginMethod("email");
+          else setLoginMethod("other");
+        }
+      }
       // Set dates from subscription
       if (subscription.startDate) {
         const start = new Date(subscription.startDate);
@@ -190,6 +209,16 @@ export function SubscriptionForm({
       // Set category
       if (selectedCategory && selectedCategory !== "General") {
         data.category = selectedCategory as any;
+      }
+      
+      // Set login method from selected credential or manual input
+      if (useCredentialMaster && selectedCredentialId) {
+        const selectedCred = accountCredentials.find(c => c.id === selectedCredentialId);
+        if (selectedCred) {
+          (data as any).accountLoginMethod = selectedCred.name; // Use credential name as login method
+        }
+      } else {
+        (data as any).accountLoginMethod = loginMethod;
       }
       
       await onSubmit(data as CreateSubscriptionInput);

@@ -83,6 +83,7 @@ export function useCreateSubscription(userId: string) {
             ? `**** ${newSubscription.paymentMethodNumber.slice(-4)}`
             : null,
           accountEmail: newSubscription.accountEmail || null,
+          accountLoginMethod: (newSubscription as any).accountLoginMethod || null,
           accountPasswordEncrypted: newSubscription.accountPassword ? "encrypted" : null,
           notes: newSubscription.notes || null,
           category: newSubscription.category || null,
