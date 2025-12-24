@@ -83,6 +83,7 @@ export async function createSubscription(
       .values({
         userId,
         name: data.name,
+        subscriptionType: data.subscriptionType || "trial",
         price: data.price.toString(),
         currency: data.currency,
         billingCycle: data.billingCycle,
@@ -171,6 +172,7 @@ export async function updateSubscription(
     };
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.subscriptionType !== undefined) updateData.subscriptionType = data.subscriptionType;
     if (data.price !== undefined) updateData.price = data.price.toString();
     if (data.currency !== undefined) updateData.currency = data.currency;
     if (data.billingCycle !== undefined) updateData.billingCycle = data.billingCycle;

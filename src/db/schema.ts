@@ -19,11 +19,18 @@ export const billingCycleEnum = pgEnum("billing_cycle", [
 
 export const statusEnum = pgEnum("status", ["active", "cancelled", "expired"]);
 
+export const subscriptionTypeEnum = pgEnum("subscription_type", [
+  "trial",
+  "voucher",
+  "subscription",
+]);
+
 // Subscriptions table
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id").notNull(), // Clerk user ID
   name: text("name").notNull(),
+  subscriptionType: subscriptionTypeEnum("subscription_type").notNull().default("trial"),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("IDR"),
   billingCycle: billingCycleEnum("billing_cycle").notNull(),
@@ -52,6 +59,9 @@ export type BillingCycle = "monthly" | "yearly" | "one-time" | "trial";
 
 // Status Type
 export type Status = "active" | "cancelled" | "expired";
+
+// Subscription Type
+export type SubscriptionType = "trial" | "voucher" | "subscription";
 
 // Category Type (now supports custom categories)
 export type Category = string;

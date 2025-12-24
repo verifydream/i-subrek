@@ -3,7 +3,7 @@
 /**
  * Subscription Form Component
  * Create/edit form with React Hook Form and Zod validation
- * Supports master data selection for payment methods, credentials, and categories
+ * Supports 3 subscription types: trial, voucher, subscription
  */
 
 import * as React from "react";
@@ -21,7 +21,10 @@ import {
   KeyRound,
   Wallet,
   Building2,
-  Smartphone
+  Smartphone,
+  Gift,
+  Clock,
+  CreditCard as SubscriptionIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -49,11 +52,16 @@ import {
   type CreateSubscriptionInput,
   type CreateSubscriptionFormInput,
 } from "@/lib/validations";
-import type { Subscription } from "@/db/schema";
+import type { Subscription, SubscriptionType } from "@/db/schema";
 import type { PaymentMethod, AccountCredential, CustomCategory } from "@/db/master-schema";
 import { cn } from "@/lib/utils";
 
-
+// Subscription type options
+const subscriptionTypeOptions = [
+  { value: "trial", label: "Trial", icon: Clock, description: "Free trial period" },
+  { value: "voucher", label: "Voucher", icon: Gift, description: "Voucher/gift card" },
+  { value: "subscription", label: "Langganan", icon: SubscriptionIcon, description: "Regular subscription" },
+] as const;
 
 // Login method options
 const loginMethodOptions = [
@@ -92,6 +100,9 @@ export function SubscriptionForm({
   const allCategories = categories.map((c) => ({ name: c.name, color: c.color || "#6366f1" }));
 
   // State
+  const [subscriptionType, setSubscriptionType] = React.useState<SubscriptionType>(
+    (subscription as any)?.subscriptionType || "trial"
+  );
   const [loginMethod, setLoginMethod] = React.useState<LoginMethod>("email");
   const [usePaymentMaster, setUsePaymentMaster] = React.useState(false);
   const [useCredentialMaster, setUseCredentialMaster] = React.useState(false);
@@ -105,6 +116,13 @@ export function SubscriptionForm({
   const [endDate, setEndDate] = React.useState<Date>(addDays(new Date(), 30));
   const [durationDays, setDurationDays] = React.useState<number>(30);
   const [startDateForDays, setStartDateForDays] = React.useState<Date>(new Date());
+
+  // Get default price based on subscription type and currency
+  const getDefaultPrice = (type: SubscriptionType, currency: "IDR" | "USD"): number => {
+    if (type === "trial") return 0;
+    if (type === "voucher") return currency === "IDR" ? 100000 : 10;
+    return currency === "IDR" ? 1000 : 1; // subscription
+  };
 
   // Update master data mode when data is loaded
   React.useEffect(() => {
@@ -122,13 +140,16 @@ export function SubscriptionForm({
   // Set initial values from subscription (edit mode)
   React.useEffect(() => {
     if (subscription) {
+      // Set subscription type
+      if ((subscription as any).subscriptionType) {
+        setSubscriptionType((subscription as any).subscriptionType);
+      }
       // Set category
       if (subscription.category) {
         setSelectedCategory(subscription.category);
       }
       // Set login method from subscription
       if ((subscription as any).accountLoginMethod) {
-        // Check if it matches a credential name
         const matchingCred = accountCredentials.find(
           c => c.name.toLowerCase() === (subscription as any).accountLoginMethod?.toLowerCase() &&
                c.email === subscription.accountEmail
@@ -137,7 +158,6 @@ export function SubscriptionForm({
           setUseCredentialMaster(true);
           setSelectedCredentialId(matchingCred.id);
         } else {
-          // Set manual login method
           const method = (subscription as any).accountLoginMethod?.toLowerCase();
           if (method?.includes("google")) setLoginMethod("google");
           else if (method?.includes("github")) setLoginMethod("github");
@@ -154,21 +174,21 @@ export function SubscriptionForm({
       if (subscription.nextPaymentDate) {
         const end = new Date(subscription.nextPaymentDate);
         setEndDate(end);
-        // Calculate duration
         const start = subscription.startDate ? new Date(subscription.startDate) : new Date();
         const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
         setDurationDays(days > 0 ? days : 30);
       }
     }
-  }, [subscription]);
+  }, [subscription, accountCredentials]);
 
   const form = useForm<CreateSubscriptionFormInput>({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
       name: subscription?.name ?? "",
-      price: subscription?.price ? parseFloat(subscription.price) : 1000, // Default 1000 for IDR
+      subscriptionType: (subscription as any)?.subscriptionType ?? "trial",
+      price: subscription?.price ? parseFloat(subscription.price) : 0,
       currency: (subscription?.currency as "IDR" | "USD") ?? "IDR",
-      billingCycle: "monthly", // Will be calculated from dates
+      billingCycle: "monthly",
       startDate: subscription?.startDate ? new Date(subscription.startDate) : new Date(),
       reminderDays: subscription?.reminderDays ?? 3,
       paymentMethodProvider: subscription?.paymentMethodProvider ?? "",
@@ -183,26 +203,35 @@ export function SubscriptionForm({
 
   const watchedCurrency = form.watch("currency");
 
-  // Update default price when currency changes
+  // Update default price when subscription type or currency changes
   React.useEffect(() => {
     const currentPrice = form.getValues("price");
-    // Only set default if price is empty or is the default value
-    if (!currentPrice || currentPrice === 1000 || currentPrice === 1) {
-      form.setValue("price", watchedCurrency === "IDR" ? 1000 : 1);
+    const defaultPrice = getDefaultPrice(subscriptionType, watchedCurrency);
+    // Only set default if price is 0 or matches previous default
+    if (currentPrice === 0 || currentPrice === getDefaultPrice("trial", watchedCurrency) ||
+        currentPrice === getDefaultPrice("voucher", watchedCurrency) ||
+        currentPrice === getDefaultPrice("subscription", watchedCurrency)) {
+      form.setValue("price", defaultPrice);
     }
-  }, [watchedCurrency, form]);
+  }, [subscriptionType, watchedCurrency, form]);
 
   // Handle form submission
   const handleSubmit = async (data: CreateSubscriptionFormInput) => {
     try {
+      // Set subscription type
+      (data as any).subscriptionType = subscriptionType;
+      
+      // For trial, price is always 0
+      if (subscriptionType === "trial") {
+        data.price = 0;
+      }
+      
       // Set the correct start date and end date based on mode
       if (dateInputMode === "date") {
         data.startDate = startDate;
-        // Use the selected end date directly as nextPaymentDate
         (data as any).nextPaymentDate = endDate;
       } else {
         data.startDate = startDateForDays;
-        // Calculate end date from duration days
         (data as any).nextPaymentDate = addDays(startDateForDays, durationDays);
       }
       
@@ -215,7 +244,7 @@ export function SubscriptionForm({
       if (useCredentialMaster && selectedCredentialId) {
         const selectedCred = accountCredentials.find(c => c.id === selectedCredentialId);
         if (selectedCred) {
-          (data as any).accountLoginMethod = selectedCred.name; // Use credential name as login method
+          (data as any).accountLoginMethod = selectedCred.name;
         }
       } else {
         (data as any).accountLoginMethod = loginMethod;
@@ -233,10 +262,47 @@ export function SubscriptionForm({
 
   // Price step based on currency
   const priceStep = watchedCurrency === "IDR" ? 1000 : 0.01;
+  
+  // Check if price field should be shown
+  const showPriceField = subscriptionType !== "trial";
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {/* Subscription Type Selector */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Tipe Subscription</label>
+          <div className="grid grid-cols-3 gap-2">
+            {subscriptionTypeOptions.map((type) => {
+              const Icon = type.icon;
+              return (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setSubscriptionType(type.value as SubscriptionType)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-lg border text-sm transition-all",
+                    subscriptionType === type.value
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-muted hover:border-primary/50"
+                  )}
+                >
+                  <Icon className={cn(
+                    "h-5 w-5",
+                    subscriptionType === type.value ? "text-primary" : "text-muted-foreground"
+                  )} />
+                  <span className="font-medium">{type.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {subscriptionType === "trial" && "Trial gratis, tidak perlu input nominal"}
+            {subscriptionType === "voucher" && "Voucher/gift card dengan nominal tertentu"}
+            {subscriptionType === "subscription" && "Langganan berbayar reguler"}
+          </p>
+        </div>
+
         {/* Name Field */}
         <FormField
           control={form.control}
@@ -270,58 +336,74 @@ export function SubscriptionForm({
           )}
         />
 
-        {/* Price and Currency Row */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step={priceStep}
-                    min="0"
-                    placeholder={watchedCurrency === "IDR" ? "50000" : "9.99"}
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      field.onChange(value ? parseFloat(value) : undefined);
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="currency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Currency</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+        {/* Price and Currency Row - Only show for voucher and subscription */}
+        {showPriceField && (
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {subscriptionType === "voucher" ? "Nominal Voucher" : "Price"}
+                  </FormLabel>
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
+                    <Input
+                      type="number"
+                      step={priceStep}
+                      min="0"
+                      placeholder={watchedCurrency === "IDR" ? 
+                        (subscriptionType === "voucher" ? "100000" : "50000") : 
+                        (subscriptionType === "voucher" ? "10" : "9.99")}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value ? parseFloat(value) : undefined);
+                      }}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    {currencyValues.map((currency) => (
-                      <SelectItem key={currency} value={currency}>
-                        {currency}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {currencyValues.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {currency}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {/* Trial info message */}
+        {subscriptionType === "trial" && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30 p-3">
+            <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Trial gratis - tidak ada biaya yang dikenakan
+            </p>
+          </div>
+        )}
 
         {/* Date Input Section */}
         <div className="space-y-4 rounded-md border p-4">
@@ -486,7 +568,6 @@ export function SubscriptionForm({
 
           {usePaymentMaster && paymentMethods.length > 0 ? (
             <div className="space-y-3">
-              {/* Group payment methods by name (GoPay, BCA, etc) */}
               {Object.entries(
                 paymentMethods.reduce((groups, method) => {
                   const name = method.name || "Other";
@@ -522,13 +603,7 @@ export function SubscriptionForm({
                             : "border-muted hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/20"
                         )}
                       >
-                        {name.toLowerCase().includes("gopay") || name.toLowerCase().includes("ovo") || name.toLowerCase().includes("dana") || name.toLowerCase().includes("shopeepay") ? (
-                          <Smartphone className="h-4 w-4 text-blue-500 shrink-0" />
-                        ) : name.toLowerCase().includes("bca") || name.toLowerCase().includes("bni") || name.toLowerCase().includes("mandiri") || name.toLowerCase().includes("bri") || name.toLowerCase().includes("bank") ? (
-                          <Building2 className="h-4 w-4 text-blue-500 shrink-0" />
-                        ) : (
-                          <CreditCard className="h-4 w-4 text-blue-500 shrink-0" />
-                        )}
+                        <CreditCard className="h-4 w-4 text-blue-500 shrink-0" />
                         <div className="flex flex-col min-w-0">
                           <span className="truncate text-xs font-medium">{method.provider}</span>
                           {method.lastFourDigits && (
@@ -540,12 +615,6 @@ export function SubscriptionForm({
                   </div>
                 </div>
               ))}
-              {selectedPaymentId && (
-                <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/30 rounded-md p-2 flex items-center gap-2">
-                  <CreditCard className="h-3 w-3" />
-                  Selected: {paymentMethods.find(p => p.id === selectedPaymentId)?.name} - {paymentMethods.find(p => p.id === selectedPaymentId)?.provider}
-                </div>
-              )}
             </div>
           ) : (
             <>
@@ -609,7 +678,6 @@ export function SubscriptionForm({
 
           {useCredentialMaster && accountCredentials.length > 0 ? (
             <div className="space-y-3">
-              {/* Group credentials by name (Google, Email, etc) */}
               {Object.entries(
                 accountCredentials.reduce((groups, cred) => {
                   const name = cred.name || "Other";
@@ -648,27 +716,13 @@ export function SubscriptionForm({
                             : "border-muted hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/20"
                         )}
                       >
-                        {name.toLowerCase().includes("google") ? (
-                          <Chrome className="h-4 w-4 text-violet-500 shrink-0" />
-                        ) : name.toLowerCase().includes("github") ? (
-                          <Github className="h-4 w-4 text-violet-500 shrink-0" />
-                        ) : name.toLowerCase().includes("email") ? (
-                          <Mail className="h-4 w-4 text-violet-500 shrink-0" />
-                        ) : (
-                          <User className="h-4 w-4 text-violet-500 shrink-0" />
-                        )}
+                        <User className="h-4 w-4 text-violet-500 shrink-0" />
                         <span className="truncate text-xs">{cred.email}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
-              {selectedCredentialId && (
-                <div className="text-xs text-muted-foreground bg-violet-50 dark:bg-violet-950/30 rounded-md p-2 flex items-center gap-2">
-                  <User className="h-3 w-3" />
-                  Selected: {accountCredentials.find(c => c.id === selectedCredentialId)?.email}
-                </div>
-              )}
             </div>
           ) : (
             <>

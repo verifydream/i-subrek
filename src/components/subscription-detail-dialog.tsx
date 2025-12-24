@@ -7,7 +7,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar, CreditCard, Mail, FileText, Edit, Trash2, Link as LinkIcon, Chrome, Github, KeyRound } from "lucide-react";
+import { Calendar, CreditCard, Mail, FileText, Edit, Trash2, Link as LinkIcon, Chrome, Github, KeyRound, Clock, Gift, CreditCard as SubscriptionIcon } from "lucide-react";
 
 import {
   Dialog,
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { PasswordCopyButton } from "@/components/password-copy-button";
 import { CalendarButton } from "@/components/calendar-button";
 import { cn } from "@/lib/utils";
-import type { Subscription, BillingCycle, Status } from "@/db/schema";
+import type { Subscription, BillingCycle, Status, SubscriptionType } from "@/db/schema";
 
 interface SubscriptionDetailDialogProps {
   subscription: Subscription | null;
@@ -61,6 +61,15 @@ function getCategoryColor(category: string | null): string {
   return colors[category] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
 }
 
+function getSubscriptionTypeInfo(type: SubscriptionType | undefined): { label: string; color: string; icon: typeof Clock } {
+  const types: Record<SubscriptionType, { label: string; color: string; icon: typeof Clock }> = {
+    trial: { label: "Trial", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Clock },
+    voucher: { label: "Voucher", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", icon: Gift },
+    subscription: { label: "Langganan", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300", icon: SubscriptionIcon },
+  };
+  return types[type || "trial"];
+}
+
 function formatCurrency(amount: string, currency: string): string {
   const numAmount = parseFloat(amount);
   return new Intl.NumberFormat("id-ID", {
@@ -82,6 +91,8 @@ export function SubscriptionDetailDialog({
 
   const nextPaymentDate = new Date(subscription.nextPaymentDate);
   const startDate = new Date(subscription.startDate);
+  const subscriptionTypeInfo = getSubscriptionTypeInfo((subscription as any).subscriptionType);
+  const TypeIcon = subscriptionTypeInfo.icon;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,6 +113,16 @@ export function SubscriptionDetailDialog({
                 >
                   {subscription.status}
                 </span>
+                {/* Subscription Type Badge */}
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
+                    subscriptionTypeInfo.color
+                  )}
+                >
+                  <TypeIcon className="h-3 w-3" />
+                  {subscriptionTypeInfo.label}
+                </span>
                 {subscription.category && (
                   <span
                     className={cn(
@@ -118,14 +139,25 @@ export function SubscriptionDetailDialog({
         </DialogHeader>
 
         <div className="p-6 space-y-5">
-          {/* Price */}
+          {/* Price - Different display based on subscription type */}
           <div className="text-center py-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">Price</p>
-            <p className="text-4xl font-bold mt-1 tracking-tight">
-              {formatCurrency(subscription.price, subscription.currency)}
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">
+              {(subscription as any).subscriptionType === "trial" ? "Status" : 
+               (subscription as any).subscriptionType === "voucher" ? "Nominal Voucher" : "Price"}
             </p>
+            {(subscription as any).subscriptionType === "trial" ? (
+              <p className="text-4xl font-bold mt-1 tracking-tight text-blue-600 dark:text-blue-400">
+                Gratis
+              </p>
+            ) : (
+              <p className="text-4xl font-bold mt-1 tracking-tight">
+                {formatCurrency(subscription.price, subscription.currency)}
+              </p>
+            )}
             <p className="text-muted-foreground mt-1 font-medium">
-              {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
+              {(subscription as any).subscriptionType === "trial" ? "Trial Period" :
+               (subscription as any).subscriptionType === "voucher" ? "Voucher/Gift Card" :
+               getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
             </p>
           </div>
 

@@ -9,7 +9,7 @@
  */
 
 import { format } from "date-fns";
-import { Calendar, Edit, MoreVertical, Trash2, Sparkles } from "lucide-react";
+import { Calendar, Edit, MoreVertical, Trash2, Sparkles, Clock, Gift, CreditCard as SubscriptionIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { isWithinReminderDays } from "@/lib/date-utils";
-import type { Subscription, BillingCycle } from "@/db/schema";
+import type { Subscription, BillingCycle, SubscriptionType } from "@/db/schema";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -53,6 +53,18 @@ function getBillingCycleLabel(cycle: BillingCycle): string {
     trial: "trial",
   };
   return labels[cycle];
+}
+
+/**
+ * Returns subscription type info with icon and label
+ */
+function getSubscriptionTypeInfo(type: SubscriptionType | undefined): { label: string; color: string } {
+  const types: Record<SubscriptionType, { label: string; color: string }> = {
+    trial: { label: "Trial", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+    voucher: { label: "Voucher", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
+    subscription: { label: "Langganan", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+  };
+  return types[type || "trial"];
 }
 
 // Get color based on days remaining
@@ -128,6 +140,7 @@ export function SubscriptionCard({
   );
   
   const colors = getDaysRemainingColor(daysRemaining);
+  const subscriptionTypeInfo = getSubscriptionTypeInfo((subscription as any).subscriptionType);
 
   return (
     <Card
@@ -168,6 +181,18 @@ export function SubscriptionCard({
               {subscription.category}
             </span>
           )}
+          {/* Subscription Type Badge */}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+              subscriptionTypeInfo.color
+            )}
+          >
+            {(subscription as any).subscriptionType === "trial" && <Clock className="h-3 w-3" />}
+            {(subscription as any).subscriptionType === "voucher" && <Gift className="h-3 w-3" />}
+            {(subscription as any).subscriptionType === "subscription" && <SubscriptionIcon className="h-3 w-3" />}
+            {subscriptionTypeInfo.label}
+          </span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -206,12 +231,20 @@ export function SubscriptionCard({
       </CardHeader>
       <CardContent className="space-y-3 pt-0 relative">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold tracking-tight">
-            {formatCurrency(subscription.price, subscription.currency)}
-          </span>
-          <span className="text-sm text-muted-foreground font-medium">
-            {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
-          </span>
+          {(subscription as any).subscriptionType === "trial" ? (
+            <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
+              Gratis
+            </span>
+          ) : (
+            <>
+              <span className="text-2xl font-bold tracking-tight">
+                {formatCurrency(subscription.price, subscription.currency)}
+              </span>
+              <span className="text-sm text-muted-foreground font-medium">
+                {(subscription as any).subscriptionType === "voucher" ? "voucher" : getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <div className={cn(

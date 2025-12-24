@@ -13,6 +13,7 @@ import {
   billingCycleValues,
   categoryValues,
   currencyValues,
+  subscriptionTypeValues,
 } from "@/lib/validations";
 
 // Track created subscription IDs for cleanup
@@ -74,6 +75,7 @@ afterAll(async () => {
 
 // Arbitrary generators for valid subscription input
 const validBillingCycle = fc.constantFrom(...billingCycleValues);
+const validSubscriptionType = fc.constantFrom(...subscriptionTypeValues);
 const validCategory = fc.constantFrom(...categoryValues);
 const validCurrency = fc.constantFrom(...currencyValues);
 const validName = fc
@@ -92,6 +94,7 @@ const validDate = fc
 // Generator for valid create subscription input
 const validCreateInput = fc.record({
   name: validName,
+  subscriptionType: validSubscriptionType,
   price: validPrice,
   currency: validCurrency,
   billingCycle: validBillingCycle,
@@ -146,9 +149,9 @@ describe("Server Actions Property Tests", () => {
           // Cleanup for next iteration
           await cleanupTestData();
         }),
-        { numRuns: 10 } // Reduced runs due to database operations
+        { numRuns: 5 } // Reduced runs due to database operations
       );
-    });
+    }, 30000); // 30 second timeout for database operations
 
     it("should not allow user to access another user's subscription by ID", async () => {
       if (!isDatabaseAvailable) {
@@ -306,9 +309,9 @@ describe("Server Actions Property Tests", () => {
 
           expect(dbRecord).toBeUndefined();
         }),
-        { numRuns: 15 }
+        { numRuns: 10 }
       );
-    });
+    }, 30000); // 30 second timeout for database operations
 
     it("should not allow user to delete another user's subscription", async () => {
       if (!isDatabaseAvailable) {

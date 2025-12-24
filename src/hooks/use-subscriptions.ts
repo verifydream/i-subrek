@@ -72,6 +72,7 @@ export function useCreateSubscription(userId: string) {
           id: `temp-${Date.now()}`,
           userId,
           name: newSubscription.name,
+          subscriptionType: (newSubscription as any).subscriptionType || "trial",
           price: newSubscription.price.toString(),
           currency: newSubscription.currency,
           billingCycle: newSubscription.billingCycle,
@@ -164,6 +165,7 @@ export function useUpdateSubscription(userId: string) {
               ? {
                   ...sub,
                   name: input.name ?? sub.name,
+                  subscriptionType: (input as any).subscriptionType ?? sub.subscriptionType,
                   price: input.price?.toString() ?? sub.price,
                   currency: input.currency ?? sub.currency,
                   billingCycle: input.billingCycle ?? sub.billingCycle,

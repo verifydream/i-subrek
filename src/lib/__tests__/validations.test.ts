@@ -103,11 +103,11 @@ describe("Zod Validation Schemas", () => {
       );
     });
 
-    it("should reject non-positive prices", () => {
+    it("should reject negative prices", () => {
       fc.assert(
         fc.property(
           validName,
-          fc.float({ min: Math.fround(-1000000), max: Math.fround(0), noNaN: true }),
+          fc.float({ min: Math.fround(-1000000), max: Math.fround(-0.01), noNaN: true }),
           validCurrency,
           validBillingCycle,
           validDate,

@@ -15,6 +15,13 @@
       "when": 1766540110341,
       "tag": "0001_public_gamma_corps",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735056000000,
+      "tag": "0002_add_subscription_type",
+      "breakpoints": true
     }
   ]
 }

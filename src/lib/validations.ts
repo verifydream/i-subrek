@@ -11,6 +11,9 @@ export const billingCycleValues = [
 // Status values
 export const statusValues = ["active", "cancelled", "expired"] as const;
 
+// Subscription Type values
+export const subscriptionTypeValues = ["trial", "voucher", "subscription"] as const;
+
 // Category values
 export const categoryValues = [
   "Entertainment",
@@ -32,7 +35,10 @@ export const createSubscriptionSchema = z.object({
     .min(1, "Name is required")
     .max(100, "Name must be 100 characters or less"),
   url: z.string().url("Invalid URL format").optional().or(z.literal("")),
-  price: z.number().positive("Price must be positive"),
+  subscriptionType: z.enum(subscriptionTypeValues, {
+    message: "Subscription type must be trial, voucher, or subscription",
+  }).default("trial"),
+  price: z.number().min(0, "Price cannot be negative"),
   currency: z.enum(currencyValues, {
     message: "Currency must be IDR or USD",
   }),

@@ -13,7 +13,9 @@ import type { Subscription, BillingCycle } from "@/db/schema";
  * 
  * - Monthly prices are counted as-is
  * - Yearly prices are divided by 12
- * - One-time and trial prices are counted as-is (full amount)
+ * - One-time prices are counted as-is (full amount)
+ * - Trial subscriptions are excluded (free)
+ * - Voucher subscriptions are counted as-is (one-time value)
  *
  * Only active subscriptions are included in the calculation.
  *
@@ -27,11 +29,23 @@ export function calculateTotalMonthlySpending(
     .filter((sub) => sub.status === "active")
     .reduce((total, sub) => {
       const price = parseFloat(sub.price);
+      const subscriptionType = (sub as any).subscriptionType;
       
       if (isNaN(price)) {
         return total;
       }
 
+      // Trial subscriptions are free, don't count them
+      if (subscriptionType === "trial") {
+        return total;
+      }
+
+      // Voucher subscriptions - count full value
+      if (subscriptionType === "voucher") {
+        return total + price;
+      }
+
+      // Regular subscriptions - calculate based on billing cycle
       switch (sub.billingCycle as BillingCycle) {
         case "monthly":
           return total + price;
@@ -61,7 +75,7 @@ export function countActiveSubscriptions(subscriptions: Subscription[]): number 
  * Gets subscriptions that are trials ending soon.
  * 
  * Returns subscriptions where:
- * - billingCycle is 'trial'
+ * - subscriptionType is 'trial' OR billingCycle is 'trial'
  * - nextPaymentDate is within thresholdDays from current date
  *
  * @param subscriptions - Array of subscriptions to filter
@@ -76,7 +90,10 @@ export function getTrialsEndingSoon(
   today.setHours(0, 0, 0, 0);
 
   return subscriptions.filter((sub) => {
-    if (sub.billingCycle !== "trial") {
+    const subscriptionType = (sub as any).subscriptionType;
+    
+    // Check if it's a trial (either by subscriptionType or billingCycle)
+    if (subscriptionType !== "trial" && sub.billingCycle !== "trial") {
       return false;
     }
 
