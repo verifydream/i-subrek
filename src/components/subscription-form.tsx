@@ -266,7 +266,29 @@ export function SubscriptionForm({
   // Check if price field should be shown
   const showPriceField = subscriptionType !== "trial";
 
+
+  // Memoized grouped payment methods
+  const groupedPaymentMethods = React.useMemo(() => {
+    return paymentMethods.reduce((groups, method) => {
+      const name = method.name || "Other";
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(method);
+      return groups;
+    }, {} as Record<string, typeof paymentMethods>);
+  }, [paymentMethods]);
+
+  // Memoized grouped account credentials
+  const groupedAccountCredentials = React.useMemo(() => {
+    return accountCredentials.reduce((groups, cred) => {
+      const name = cred.name || "Other";
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(cred);
+      return groups;
+    }, {} as Record<string, typeof accountCredentials>);
+  }, [accountCredentials]);
+
   return (
+
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {/* Subscription Type Selector */}
@@ -568,14 +590,7 @@ export function SubscriptionForm({
 
           {usePaymentMaster && paymentMethods.length > 0 ? (
             <div className="space-y-3">
-              {Object.entries(
-                paymentMethods.reduce((groups, method) => {
-                  const name = method.name || "Other";
-                  if (!groups[name]) groups[name] = [];
-                  groups[name].push(method);
-                  return groups;
-                }, {} as Record<string, typeof paymentMethods>)
-              ).map(([name, methods]) => (
+              {Object.entries(groupedPaymentMethods as Record<string, typeof paymentMethods>).map(([name, methods]) => (
                 <div key={name} className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
                     {name.toLowerCase().includes("gopay") || name.toLowerCase().includes("ovo") || name.toLowerCase().includes("dana") || name.toLowerCase().includes("shopeepay") ? (
@@ -677,15 +692,7 @@ export function SubscriptionForm({
           </div>
 
           {useCredentialMaster && accountCredentials.length > 0 ? (
-            <div className="space-y-3">
-              {Object.entries(
-                accountCredentials.reduce((groups, cred) => {
-                  const name = cred.name || "Other";
-                  if (!groups[name]) groups[name] = [];
-                  groups[name].push(cred);
-                  return groups;
-                }, {} as Record<string, typeof accountCredentials>)
-              ).map(([name, creds]) => (
+            <div className="space-y-3">              {Object.entries(groupedAccountCredentials as Record<string, typeof accountCredentials>).map(([name, creds]) => (
                 <div key={name} className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-violet-600 dark:text-violet-400">
                     {name.toLowerCase().includes("google") ? (
