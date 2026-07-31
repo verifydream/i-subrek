@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 import { generateGoogleCalendarUrl } from "../calendar";
-import type { Subscription, BillingCycle, Category, Status } from "@/db/schema";
+import type { Subscription, BillingCycle, Category, Status, SubscriptionType } from "@/db/schema";
 
 // Arbitrary generators for subscription fields
 const billingCycleArb = fc.constantFrom<BillingCycle>(
@@ -12,6 +12,8 @@ const billingCycleArb = fc.constantFrom<BillingCycle>(
 );
 
 const statusArb = fc.constantFrom<Status>("active", "cancelled", "expired");
+
+const subscriptionTypeArb = fc.constantFrom<SubscriptionType>("trial", "voucher", "subscription");
 
 const categoryArb = fc.constantFrom<Category | null>(
   "Entertainment",
@@ -54,6 +56,9 @@ const subscriptionArb: fc.Arbitrary<Subscription> = fc.record({
   id: uuidArb,
   userId: fc.string({ minLength: 1, maxLength: 50 }),
   name: nameArb,
+  subscriptionType: subscriptionTypeArb,
+  url: fc.option(fc.string(), { nil: null }),
+  accountLoginMethod: fc.option(fc.string(), { nil: null }),
   price: fc
     .integer({ min: 1, max: 9999999999 })
     .map((n) => (n / 100).toFixed(2)),

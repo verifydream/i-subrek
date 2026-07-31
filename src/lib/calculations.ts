@@ -29,7 +29,7 @@ export function calculateTotalMonthlySpending(
     .filter((sub) => sub.status === "active")
     .reduce((total, sub) => {
       const price = parseFloat(sub.price);
-      const subscriptionType = (sub as any).subscriptionType;
+      const subscriptionType = sub.subscriptionType;
       
       if (isNaN(price)) {
         return total;
@@ -90,7 +90,7 @@ export function getTrialsEndingSoon(
   today.setHours(0, 0, 0, 0);
 
   return subscriptions.filter((sub) => {
-    const subscriptionType = (sub as any).subscriptionType;
+    const subscriptionType = sub.subscriptionType;
     
     // Check if it's a trial (either by subscriptionType or billingCycle)
     if (subscriptionType !== "trial" && sub.billingCycle !== "trial") {
