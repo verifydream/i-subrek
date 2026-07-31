@@ -9,6 +9,7 @@ import { paymentMethods, accountCredentials, customCategories } from "@/db/maste
 import { eq, and } from "drizzle-orm";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 import { maskPaymentMethod } from "@/lib/masking";
+import { requireUserId } from "@/lib/auth";
 
 interface ActionResult<T> {
   success: boolean;
@@ -37,6 +38,8 @@ export async function createPaymentMethod(
   input: { name: string; provider: string; accountNumber?: string; isDefault?: boolean }
 ): Promise<ActionResult<typeof paymentMethods.$inferSelect>> {
   try {
+    userId = await requireUserId();
+
     const lastFourDigits = input.accountNumber
       ? maskPaymentMethod(input.accountNumber)
       : null;
