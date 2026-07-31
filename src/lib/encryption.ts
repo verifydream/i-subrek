@@ -5,7 +5,7 @@
  * Requirements: 4.1, 4.2
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
@@ -29,7 +29,7 @@ function getEncryptionKey(): Buffer {
 
   if (keyBuffer.length < 32) {
     // Pad the key if it's too short (not recommended for production)
-    return Buffer.concat([keyBuffer, Buffer.alloc(32 - keyBuffer.length)]);
+    return createHash("sha256").update(keyBuffer).digest();
   }
 
   return keyBuffer.subarray(0, 32);
