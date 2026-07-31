@@ -5,7 +5,7 @@ import {
   deserializeSubscription,
   type SerializableSubscription,
 } from "../serialization";
-import type { BillingCycle, Category, Status } from "@/db/schema";
+import type { BillingCycle, Category, Status, SubscriptionType } from "@/db/schema";
 
 // Arbitrary generators for subscription fields
 const billingCycleArb = fc.constantFrom<BillingCycle>(
@@ -16,6 +16,8 @@ const billingCycleArb = fc.constantFrom<BillingCycle>(
 );
 
 const statusArb = fc.constantFrom<Status>("active", "cancelled", "expired");
+
+const subscriptionTypeArb = fc.constantFrom<SubscriptionType>("trial", "voucher", "subscription");
 
 const categoryArb = fc.constantFrom<Category | null>(
   "Entertainment",

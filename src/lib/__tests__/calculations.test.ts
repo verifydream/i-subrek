@@ -5,7 +5,7 @@ import {
   countActiveSubscriptions,
   getTrialsEndingSoon,
 } from "../calculations";
-import type { Subscription, BillingCycle, Status, Category } from "@/db/schema";
+import type { Subscription, BillingCycle, Status, Category, SubscriptionType } from "@/db/schema";
 
 // Arbitrary for billing cycles
 const billingCycleArb = fc.constantFrom<BillingCycle>(
@@ -17,6 +17,8 @@ const billingCycleArb = fc.constantFrom<BillingCycle>(
 
 // Arbitrary for status
 const statusArb = fc.constantFrom<Status>("active", "cancelled", "expired");
+
+const subscriptionTypeArb = fc.constantFrom<SubscriptionType>("trial", "voucher", "subscription");
 
 // Arbitrary for category
 const categoryArb = fc.constantFrom<Category | null>(
@@ -43,6 +45,9 @@ const subscriptionArb = fc.record({
   id: fc.uuid(),
   userId: fc.string({ minLength: 1, maxLength: 50 }),
   name: fc.string({ minLength: 1, maxLength: 100 }),
+  subscriptionType: subscriptionTypeArb,
+  url: fc.option(fc.string(), { nil: null }),
+  accountLoginMethod: fc.option(fc.string(), { nil: null }),
   price: priceArb,
   currency: fc.constantFrom("IDR", "USD"),
   billingCycle: billingCycleArb,
@@ -84,6 +89,8 @@ describe("Dashboard Calculation Utilities", () => {
               const price = parseFloat(sub.price);
               if (isNaN(price)) return total;
 
+              if (sub.subscriptionType === 'trial') return total;
+              if (sub.subscriptionType === 'voucher') return total + price;
               switch (sub.billingCycle) {
                 case "monthly":
                   return total + price;
@@ -242,7 +249,7 @@ describe("Dashboard Calculation Utilities", () => {
 
             // Verify all results are trials
             result.forEach((sub) => {
-              expect(sub.billingCycle).toBe("trial");
+              expect(sub.billingCycle === 'trial' || sub.subscriptionType === 'trial').toBe(true);
             });
 
             // Verify all results are within threshold
