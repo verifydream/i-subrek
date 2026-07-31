@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PasswordCopyButton } from "@/components/password-copy-button";
 import { CalendarButton } from "@/components/calendar-button";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { BillingCycle, Status } from "@/db/schema";
 
 interface SubscriptionDetailPageProps {
@@ -60,19 +60,6 @@ function getCategoryColor(category: string | null): string {
     Utilities: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   };
   return colors[category] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-}
-
-/**
- * Formats a number as currency with proper locale formatting
- */
-function formatCurrency(amount: string, currency: string): string {
-  const numAmount = parseFloat(amount);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numAmount);
 }
 
 export default async function SubscriptionDetailPage({
