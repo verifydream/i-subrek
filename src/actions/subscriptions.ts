@@ -7,6 +7,7 @@
  * Requirements: 2.1, 2.4, 3.1, 4.1
  */
 
+import { requireUserId } from "@/lib/auth";
 import { db } from "@/db";
 import { subscriptions, type Subscription } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -37,10 +38,12 @@ export interface ActionResult<T> {
  * @returns ActionResult with the created subscription or error
  */
 export async function createSubscription(
-  userId: string,
+  _userId: string,
   input: CreateSubscriptionInput
 ): Promise<ActionResult<Subscription>> {
   try {
+    const authUserId = await requireUserId();
+    const userId = authUserId; // Use authenticated ID instead of client-provided one
     // Validate input
     const validationResult = createSubscriptionSchema.safeParse(input);
     if (!validationResult.success) {
