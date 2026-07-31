@@ -20,7 +20,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { PasswordCopyButton } from "@/components/password-copy-button";
 import { CalendarButton } from "@/components/calendar-button";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Subscription, BillingCycle, Status, SubscriptionType } from "@/db/schema";
 
 interface SubscriptionDetailDialogProps {
@@ -68,16 +68,6 @@ function getSubscriptionTypeInfo(type: SubscriptionType | undefined): { label: s
     subscription: { label: "Langganan", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300", icon: SubscriptionIcon },
   };
   return types[type || "trial"];
-}
-
-function formatCurrency(amount: string, currency: string): string {
-  const numAmount = parseFloat(amount);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numAmount);
 }
 
 export function SubscriptionDetailDialog({

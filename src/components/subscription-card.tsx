@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { isWithinReminderDays } from "@/lib/date-utils";
 import type { Subscription, BillingCycle, SubscriptionType } from "@/db/schema";
 
@@ -28,19 +28,6 @@ interface SubscriptionCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onClick?: () => void;
-}
-
-/**
- * Formats a number as currency with proper locale formatting
- */
-function formatCurrency(amount: string, currency: string): string {
-  const numAmount = parseFloat(amount);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numAmount);
 }
 
 /**

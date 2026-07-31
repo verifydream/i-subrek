@@ -9,7 +9,7 @@
 
 import { AlertTriangle, CreditCard, TrendingUp, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Subscription } from "@/db/schema";
 
 interface SummaryCardsProps {
@@ -17,18 +17,6 @@ interface SummaryCardsProps {
   activeCount: number;
   trialsEndingSoon: Subscription[];
   currency: string;
-}
-
-/**
- * Formats a number as currency with proper locale formatting
- */
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function SummaryCards({
