@@ -54,6 +54,7 @@ const subscriptionArb: fc.Arbitrary<Subscription> = fc.record({
   id: uuidArb,
   userId: fc.string({ minLength: 1, maxLength: 50 }),
   name: nameArb,
+  subscriptionType: fc.constantFrom("trial", "voucher", "subscription"),
   price: fc
     .integer({ min: 1, max: 9999999999 })
     .map((n) => (n / 100).toFixed(2)),
@@ -65,9 +66,11 @@ const subscriptionArb: fc.Arbitrary<Subscription> = fc.record({
   paymentMethodProvider: nullableStringArb,
   paymentMethodNumber: nullableStringArb,
   accountEmail: fc.option(fc.emailAddress(), { nil: null }),
+  accountLoginMethod: nullableStringArb,
   accountPasswordEncrypted: nullableStringArb,
   notes: fc.option(fc.string({ maxLength: 500 }), { nil: null }),
   category: categoryArb,
+  url: nullableStringArb,
   status: statusArb,
   createdAt: timestampArb,
   updatedAt: timestampArb,

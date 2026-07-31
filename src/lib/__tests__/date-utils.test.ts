@@ -15,13 +15,6 @@ const dateArb = fc.date({
 });
 
 // Arbitrary for billing cycles
-const billingCycleArb = fc.constantFrom<BillingCycle>(
-  "monthly",
-  "yearly",
-  "one-time",
-  "trial"
-);
-
 describe("Date Calculation Utilities", () => {
   /**
    * **Feature: isubrek-subscription-tracker, Property 3: Next Payment Date Calculation**

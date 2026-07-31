@@ -46,5 +46,5 @@ export function filterBySubscriptionType(
   subscriptions: Subscription[],
   type: SubscriptionType
 ): Subscription[] {
-  return subscriptions.filter((sub) => (sub as any).subscriptionType === type);
+  return subscriptions.filter((sub) => sub.subscriptionType === type);
 }

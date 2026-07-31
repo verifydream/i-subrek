@@ -101,7 +101,7 @@ export function SubscriptionForm({
 
   // State
   const [subscriptionType, setSubscriptionType] = React.useState<SubscriptionType>(
-    (subscription as any)?.subscriptionType || "trial"
+    subscription?.subscriptionType || "trial"
   );
   const [loginMethod, setLoginMethod] = React.useState<LoginMethod>("email");
   const [usePaymentMaster, setUsePaymentMaster] = React.useState(false);
@@ -141,24 +141,24 @@ export function SubscriptionForm({
   React.useEffect(() => {
     if (subscription) {
       // Set subscription type
-      if ((subscription as any).subscriptionType) {
-        setSubscriptionType((subscription as any).subscriptionType);
+      if (subscription.subscriptionType) {
+        setSubscriptionType(subscription.subscriptionType);
       }
       // Set category
       if (subscription.category) {
         setSelectedCategory(subscription.category);
       }
       // Set login method from subscription
-      if ((subscription as any).accountLoginMethod) {
+      if (subscription.accountLoginMethod) {
         const matchingCred = accountCredentials.find(
-          c => c.name.toLowerCase() === (subscription as any).accountLoginMethod?.toLowerCase() &&
+          c => c.name.toLowerCase() === subscription.accountLoginMethod?.toLowerCase() &&
                c.email === subscription.accountEmail
         );
         if (matchingCred) {
           setUseCredentialMaster(true);
           setSelectedCredentialId(matchingCred.id);
         } else {
-          const method = (subscription as any).accountLoginMethod?.toLowerCase();
+          const method = subscription.accountLoginMethod?.toLowerCase();
           if (method?.includes("google")) setLoginMethod("google");
           else if (method?.includes("github")) setLoginMethod("github");
           else if (method?.includes("email")) setLoginMethod("email");
@@ -185,7 +185,7 @@ export function SubscriptionForm({
     resolver: zodResolver(createSubscriptionSchema),
     defaultValues: {
       name: subscription?.name ?? "",
-      subscriptionType: (subscription as any)?.subscriptionType ?? "trial",
+      subscriptionType: subscription?.subscriptionType ?? "trial",
       price: subscription?.price ? parseFloat(subscription.price) : 0,
       currency: (subscription?.currency as "IDR" | "USD") ?? "IDR",
       billingCycle: "monthly",
@@ -197,7 +197,7 @@ export function SubscriptionForm({
       accountPassword: "",
       notes: subscription?.notes ?? "",
       category: subscription?.category ?? undefined,
-      url: (subscription as any)?.url ?? "",
+      url: subscription?.url ?? "",
     },
   });
 
@@ -219,7 +219,7 @@ export function SubscriptionForm({
   const handleSubmit = async (data: CreateSubscriptionFormInput) => {
     try {
       // Set subscription type
-      (data as any).subscriptionType = subscriptionType;
+      data.subscriptionType = subscriptionType;
       
       // For trial, price is always 0
       if (subscriptionType === "trial") {
@@ -229,25 +229,25 @@ export function SubscriptionForm({
       // Set the correct start date and end date based on mode
       if (dateInputMode === "date") {
         data.startDate = startDate;
-        (data as any).nextPaymentDate = endDate;
+        data.nextPaymentDate = endDate;
       } else {
         data.startDate = startDateForDays;
-        (data as any).nextPaymentDate = addDays(startDateForDays, durationDays);
+        data.nextPaymentDate = addDays(startDateForDays, durationDays);
       }
       
       // Set category
       if (selectedCategory && selectedCategory !== "General") {
-        data.category = selectedCategory as any;
+        data.category = selectedCategory;
       }
       
       // Set login method from selected credential or manual input
       if (useCredentialMaster && selectedCredentialId) {
         const selectedCred = accountCredentials.find(c => c.id === selectedCredentialId);
         if (selectedCred) {
-          (data as any).accountLoginMethod = selectedCred.name;
+          data.accountLoginMethod = selectedCred.name;
         }
       } else {
-        (data as any).accountLoginMethod = loginMethod;
+        data.accountLoginMethod = loginMethod;
       }
       
       await onSubmit(data as CreateSubscriptionInput);

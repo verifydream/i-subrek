@@ -91,7 +91,7 @@ export function SubscriptionDetailDialog({
 
   const nextPaymentDate = new Date(subscription.nextPaymentDate);
   const startDate = new Date(subscription.startDate);
-  const subscriptionTypeInfo = getSubscriptionTypeInfo((subscription as any).subscriptionType);
+  const subscriptionTypeInfo = getSubscriptionTypeInfo(subscription.subscriptionType);
   const TypeIcon = subscriptionTypeInfo.icon;
 
   return (
@@ -142,10 +142,10 @@ export function SubscriptionDetailDialog({
           {/* Price - Different display based on subscription type */}
           <div className="text-center py-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
             <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">
-              {(subscription as any).subscriptionType === "trial" ? "Status" : 
-               (subscription as any).subscriptionType === "voucher" ? "Nominal Voucher" : "Price"}
+              {subscription.subscriptionType === "trial" ? "Status" :
+               subscription.subscriptionType === "voucher" ? "Nominal Voucher" : "Price"}
             </p>
-            {(subscription as any).subscriptionType === "trial" ? (
+            {subscription.subscriptionType === "trial" ? (
               <p className="text-4xl font-bold mt-1 tracking-tight text-blue-600 dark:text-blue-400">
                 Gratis
               </p>
@@ -155,8 +155,8 @@ export function SubscriptionDetailDialog({
               </p>
             )}
             <p className="text-muted-foreground mt-1 font-medium">
-              {(subscription as any).subscriptionType === "trial" ? "Trial Period" :
-               (subscription as any).subscriptionType === "voucher" ? "Voucher/Gift Card" :
+              {subscription.subscriptionType === "trial" ? "Trial Period" :
+               subscription.subscriptionType === "voucher" ? "Voucher/Gift Card" :
                getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
             </p>
           </div>
@@ -241,20 +241,20 @@ export function SubscriptionDetailDialog({
                 Account Details
               </h3>
               <div className="space-y-3 text-sm">
-                {(subscription as any).accountLoginMethod && (
+                {subscription.accountLoginMethod && (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                     <span className="text-muted-foreground">Login Method</span>
                     <span className="font-semibold flex items-center gap-2">
-                      {(subscription as any).accountLoginMethod.toLowerCase().includes("google") ? (
+                      {subscription.accountLoginMethod.toLowerCase().includes("google") ? (
                         <Chrome className="h-4 w-4 text-blue-500" />
-                      ) : (subscription as any).accountLoginMethod.toLowerCase().includes("github") ? (
+                      ) : subscription.accountLoginMethod.toLowerCase().includes("github") ? (
                         <Github className="h-4 w-4" />
-                      ) : (subscription as any).accountLoginMethod.toLowerCase().includes("email") ? (
+                      ) : subscription.accountLoginMethod.toLowerCase().includes("email") ? (
                         <Mail className="h-4 w-4 text-green-500" />
                       ) : (
                         <KeyRound className="h-4 w-4 text-violet-500" />
                       )}
-                      {(subscription as any).accountLoginMethod}
+                      {subscription.accountLoginMethod}
                     </span>
                   </div>
                 )}

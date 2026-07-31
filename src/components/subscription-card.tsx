@@ -140,7 +140,7 @@ export function SubscriptionCard({
   );
   
   const colors = getDaysRemainingColor(daysRemaining);
-  const subscriptionTypeInfo = getSubscriptionTypeInfo((subscription as any).subscriptionType);
+  const subscriptionTypeInfo = getSubscriptionTypeInfo(subscription.subscriptionType);
 
   return (
     <Card
@@ -188,9 +188,9 @@ export function SubscriptionCard({
               subscriptionTypeInfo.color
             )}
           >
-            {(subscription as any).subscriptionType === "trial" && <Clock className="h-3 w-3" />}
-            {(subscription as any).subscriptionType === "voucher" && <Gift className="h-3 w-3" />}
-            {(subscription as any).subscriptionType === "subscription" && <SubscriptionIcon className="h-3 w-3" />}
+            {subscription.subscriptionType === "trial" && <Clock className="h-3 w-3" />}
+            {subscription.subscriptionType === "voucher" && <Gift className="h-3 w-3" />}
+            {subscription.subscriptionType === "subscription" && <SubscriptionIcon className="h-3 w-3" />}
             {subscriptionTypeInfo.label}
           </span>
         </div>
@@ -231,7 +231,7 @@ export function SubscriptionCard({
       </CardHeader>
       <CardContent className="space-y-3 pt-0 relative">
         <div className="flex items-baseline gap-1.5">
-          {(subscription as any).subscriptionType === "trial" ? (
+          {subscription.subscriptionType === "trial" ? (
             <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
               Gratis
             </span>
@@ -241,7 +241,7 @@ export function SubscriptionCard({
                 {formatCurrency(subscription.price, subscription.currency)}
               </span>
               <span className="text-sm text-muted-foreground font-medium">
-                {(subscription as any).subscriptionType === "voucher" ? "voucher" : getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
+                {subscription.subscriptionType === "voucher" ? "voucher" : getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
               </span>
             </>
           )}

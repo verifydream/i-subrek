@@ -1,4 +1,4 @@
-import { expect, vi } from "vitest";
+
 import * as fc from "fast-check";
 
 // Configure fast-check defaults for property-based testing

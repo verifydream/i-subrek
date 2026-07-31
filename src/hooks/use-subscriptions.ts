@@ -72,7 +72,7 @@ export function useCreateSubscription(userId: string) {
           id: `temp-${Date.now()}`,
           userId,
           name: newSubscription.name,
-          subscriptionType: (newSubscription as any).subscriptionType || "trial",
+          subscriptionType: newSubscription.subscriptionType || "trial",
           price: newSubscription.price.toString(),
           currency: newSubscription.currency,
           billingCycle: newSubscription.billingCycle,
@@ -84,7 +84,7 @@ export function useCreateSubscription(userId: string) {
             ? `**** ${newSubscription.paymentMethodNumber.slice(-4)}`
             : null,
           accountEmail: newSubscription.accountEmail || null,
-          accountLoginMethod: (newSubscription as any).accountLoginMethod || null,
+          accountLoginMethod: newSubscription.accountLoginMethod || null,
           accountPasswordEncrypted: newSubscription.accountPassword ? "encrypted" : null,
           notes: newSubscription.notes || null,
           category: newSubscription.category || null,
@@ -165,7 +165,7 @@ export function useUpdateSubscription(userId: string) {
               ? {
                   ...sub,
                   name: input.name ?? sub.name,
-                  subscriptionType: (input as any).subscriptionType ?? sub.subscriptionType,
+                  subscriptionType: input.subscriptionType ?? sub.subscriptionType,
                   price: input.price?.toString() ?? sub.price,
                   currency: input.currency ?? sub.currency,
                   billingCycle: input.billingCycle ?? sub.billingCycle,
