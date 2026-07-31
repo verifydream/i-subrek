@@ -11,7 +11,6 @@ import {
 } from "../subscriptions";
 import {
   billingCycleValues,
-  categoryValues,
   currencyValues,
   subscriptionTypeValues,
 } from "@/lib/validations";
@@ -76,7 +75,6 @@ afterAll(async () => {
 // Arbitrary generators for valid subscription input
 const validBillingCycle = fc.constantFrom(...billingCycleValues);
 const validSubscriptionType = fc.constantFrom(...subscriptionTypeValues);
-const validCategory = fc.constantFrom(...categoryValues);
 const validCurrency = fc.constantFrom(...currencyValues);
 const validName = fc
   .string({ minLength: 1, maxLength: 50 })
@@ -113,11 +111,7 @@ describe("Server Actions Property Tests", () => {
    * **Validates: Requirements 1.5, 2.5**
    */
   describe("Property 1: User Data Isolation", () => {
-    it("should return only subscriptions belonging to the authenticated user", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should return only subscriptions belonging to the authenticated user", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, validCreateInput, async (input1, input2) => {
           // Create subscription for user 1
@@ -153,11 +147,7 @@ describe("Server Actions Property Tests", () => {
       );
     }, 30000); // 30 second timeout for database operations
 
-    it("should not allow user to access another user's subscription by ID", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should not allow user to access another user's subscription by ID", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, async (input) => {
           // Create subscription for user 1
@@ -197,11 +187,7 @@ describe("Server Actions Property Tests", () => {
     const uuidV4Regex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-    it("should create subscription with valid UUID and correct user ID", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should create subscription with valid UUID and correct user ID", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, async (input) => {
           const result = await createSubscription(TEST_USER_1, input);
@@ -232,11 +218,7 @@ describe("Server Actions Property Tests", () => {
       );
     });
 
-    it("should persist subscription to database with correct data", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should persist subscription to database with correct data", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, async (input) => {
           const result = await createSubscription(TEST_USER_1, input);
@@ -274,11 +256,7 @@ describe("Server Actions Property Tests", () => {
    * **Validates: Requirements 2.4**
    */
   describe("Property 4: Subscription Deletion Completeness", () => {
-    it("should completely remove subscription after deletion", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should completely remove subscription after deletion", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, async (input) => {
           // Create a subscription
@@ -313,11 +291,7 @@ describe("Server Actions Property Tests", () => {
       );
     }, 30000); // 30 second timeout for database operations
 
-    it("should not allow user to delete another user's subscription", async () => {
-      if (!isDatabaseAvailable) {
-        console.log("Skipping test - database not available");
-        return;
-      }
+    it.skipIf(!isDatabaseAvailable)("should not allow user to delete another user's subscription", async () => {
       await fc.assert(
         fc.asyncProperty(validCreateInput, async (input) => {
           // Create subscription for user 1
