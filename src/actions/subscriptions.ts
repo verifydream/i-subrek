@@ -7,6 +7,7 @@
  * Requirements: 2.1, 2.4, 3.1, 4.1
  */
 
+import { requireUserId } from "@/lib/auth";
 import { db } from "@/db";
 import { subscriptions, type Subscription } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -37,10 +38,11 @@ export interface ActionResult<T> {
  * @returns ActionResult with the created subscription or error
  */
 export async function createSubscription(
-  userId: string,
+  _clientUserId: string,
   input: CreateSubscriptionInput
 ): Promise<ActionResult<Subscription>> {
   try {
+    const userId = await requireUserId();
     // Validate input
     const validationResult = createSubscriptionSchema.safeParse(input);
     if (!validationResult.success) {
@@ -125,11 +127,12 @@ export async function createSubscription(
  * @returns ActionResult with the updated subscription or error
  */
 export async function updateSubscription(
-  userId: string,
+  _clientUserId: string,
   subscriptionId: string,
   input: UpdateSubscriptionInput
 ): Promise<ActionResult<Subscription>> {
   try {
+    const userId = await requireUserId();
     // Validate input
     const validationResult = updateSubscriptionSchema.safeParse(input);
     if (!validationResult.success) {
@@ -252,10 +255,11 @@ export async function updateSubscription(
  * @returns ActionResult indicating success or failure
  */
 export async function deleteSubscription(
-  userId: string,
+  _clientUserId: string,
   subscriptionId: string
 ): Promise<ActionResult<void>> {
   try {
+    const userId = await requireUserId();
     // Delete with ownership check
     const result = await db
       .delete(subscriptions)
@@ -290,8 +294,11 @@ export async function deleteSubscription(
  * @param userId - The Clerk user ID
  * @returns Array of subscriptions belonging to the user
  */
-export async function getSubscriptions(userId: string): Promise<Subscription[]> {
+export async function getSubscriptions(
+  _clientUserId: string
+): Promise<Subscription[]> {
   try {
+    const userId = await requireUserId();
     const userSubscriptions = await db
       .select()
       .from(subscriptions)
@@ -314,10 +321,11 @@ export async function getSubscriptions(userId: string): Promise<Subscription[]> 
  * @returns The subscription or null if not found/not owned
  */
 export async function getSubscriptionById(
-  userId: string,
+  _clientUserId: string,
   subscriptionId: string
 ): Promise<Subscription | null> {
   try {
+    const userId = await requireUserId();
     const [subscription] = await db
       .select()
       .from(subscriptions)
@@ -344,10 +352,11 @@ export async function getSubscriptionById(
  * @returns ActionResult with the decrypted password or error
  */
 export async function decryptSubscriptionPassword(
-  userId: string,
+  _clientUserId: string,
   subscriptionId: string
 ): Promise<ActionResult<string>> {
   try {
+    const userId = await requireUserId();
     // Verify ownership and get subscription
     const [subscription] = await db
       .select()
