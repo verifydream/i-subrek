@@ -201,6 +201,16 @@ export function SubscriptionForm({
     },
   });
 
+
+  const groupedCredentials = React.useMemo(() => {
+    return accountCredentials.reduce((groups, cred) => {
+      const name = cred.name || "Other";
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(cred);
+      return groups;
+    }, {} as Record<string, typeof accountCredentials>);
+  }, [accountCredentials]);
+
   const watchedCurrency = form.watch("currency");
 
   // Update default price when subscription type or currency changes
@@ -678,14 +688,7 @@ export function SubscriptionForm({
 
           {useCredentialMaster && accountCredentials.length > 0 ? (
             <div className="space-y-3">
-              {Object.entries(
-                accountCredentials.reduce((groups, cred) => {
-                  const name = cred.name || "Other";
-                  if (!groups[name]) groups[name] = [];
-                  groups[name].push(cred);
-                  return groups;
-                }, {} as Record<string, typeof accountCredentials>)
-              ).map(([name, creds]) => (
+              {Object.entries(groupedCredentials).map(([name, creds]) => (
                 <div key={name} className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-violet-600 dark:text-violet-400">
                     {name.toLowerCase().includes("google") ? (
