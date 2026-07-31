@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 /**
  * Subscription Card Component
@@ -58,11 +59,11 @@ function getBillingCycleLabel(cycle: BillingCycle): string {
 /**
  * Returns subscription type info with icon and label
  */
-function getSubscriptionTypeInfo(type: SubscriptionType | undefined): { label: string; color: string } {
-  const types: Record<SubscriptionType, { label: string; color: string }> = {
-    trial: { label: "Trial", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-    voucher: { label: "Voucher", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
-    subscription: { label: "Langganan", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+function getSubscriptionTypeInfo(type: SubscriptionType | undefined): { label: string; color: string; icon: React.ElementType } {
+  const types: Record<SubscriptionType, { label: string; color: string; icon: React.ElementType }> = {
+    trial: { label: "Trial", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Clock },
+    voucher: { label: "Voucher", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", icon: Gift },
+    subscription: { label: "Langganan", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300", icon: SubscriptionIcon },
   };
   return types[type || "trial"];
 }
@@ -142,6 +143,32 @@ export function SubscriptionCard({
   const colors = getDaysRemainingColor(daysRemaining);
   const subscriptionTypeInfo = getSubscriptionTypeInfo((subscription as any).subscriptionType);
 
+  const priceDisplayMap: Record<SubscriptionType, React.ReactNode> = {
+    trial: (
+      <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
+        Gratis
+      </span>
+    ),
+    voucher: (
+      <>
+        <span className="text-2xl font-bold tracking-tight">
+          {formatCurrency(subscription.price, subscription.currency)}
+        </span>
+        <span className="text-sm text-muted-foreground font-medium">voucher</span>
+      </>
+    ),
+    subscription: (
+      <>
+        <span className="text-2xl font-bold tracking-tight">
+          {formatCurrency(subscription.price, subscription.currency)}
+        </span>
+        <span className="text-sm text-muted-foreground font-medium">
+          {getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
+        </span>
+      </>
+    ),
+  };
+
   return (
     <Card
       className={cn(
@@ -188,9 +215,7 @@ export function SubscriptionCard({
               subscriptionTypeInfo.color
             )}
           >
-            {(subscription as any).subscriptionType === "trial" && <Clock className="h-3 w-3" />}
-            {(subscription as any).subscriptionType === "voucher" && <Gift className="h-3 w-3" />}
-            {(subscription as any).subscriptionType === "subscription" && <SubscriptionIcon className="h-3 w-3" />}
+            {React.createElement(subscriptionTypeInfo.icon, { className: "h-3 w-3" })}
             {subscriptionTypeInfo.label}
           </span>
         </div>
@@ -231,20 +256,7 @@ export function SubscriptionCard({
       </CardHeader>
       <CardContent className="space-y-3 pt-0 relative">
         <div className="flex items-baseline gap-1.5">
-          {(subscription as any).subscriptionType === "trial" ? (
-            <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
-              Gratis
-            </span>
-          ) : (
-            <>
-              <span className="text-2xl font-bold tracking-tight">
-                {formatCurrency(subscription.price, subscription.currency)}
-              </span>
-              <span className="text-sm text-muted-foreground font-medium">
-                {(subscription as any).subscriptionType === "voucher" ? "voucher" : getBillingCycleLabel(subscription.billingCycle as BillingCycle)}
-              </span>
-            </>
-          )}
+          {priceDisplayMap[(subscription as any).subscriptionType as SubscriptionType || "trial"]}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <div className={cn(
